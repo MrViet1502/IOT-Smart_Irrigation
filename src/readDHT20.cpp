@@ -4,9 +4,9 @@
 void taskReadSensor(void* ptrParameter)
 {
   // declare DHT20 object and wire obejct
-  // DHT20 dht;
-  // Wire.begin(SDA_PIN, SCL_PIN); // the oneWire communication
-  // dht.begin();
+  DHT20 dht;
+  Wire.begin(SDA_PIN, SCL_PIN); // the oneWire communication
+  dht.begin();
 
   // declare thingsboard object
   WiFiClient wifiClient;
@@ -15,10 +15,12 @@ void taskReadSensor(void* ptrParameter)
 
   int temperature = 0;
   int humidity = 0;
+
   while (true)
   {
 
-    if (!tb.connected()) {
+    if (!tb.connected()) 
+    {
       Serial.print("Connecting to: ");
       Serial.print(THINGSBOARD_SERVER);
       Serial.print(" with token ");
@@ -27,49 +29,22 @@ void taskReadSensor(void* ptrParameter)
         Serial.println("Failed to connect");
       else
         Serial.println("Connected to thingsboard");
-
-      // tb.sendAttributeData("macAddress", WiFi.macAddress().c_str());
-
-      // Serial.println("Subscribing for RPC...");
-      // if (!tb.RPC_Subscribe(callbacks.cbegin(), callbacks.cend())) {
-      //   Serial.println("Failed to subscribe for RPC");
-      //   return;
-      // }
-
-      // if (!tb.Shared_Attributes_Subscribe(attributes_callback)) {
-      //   Serial.println("Failed to subscribe for shared attribute updates");
-      //   return;
-      // }
-
-      // Serial.println("Subscribe done");
-
-      // if (!tb.Shared_Attributes_Request(attribute_shared_request_callback)) {
-      //   Serial.println("Failed to request for shared attributes");
-      //   return;
-      // }
     }
 
-
-    // dht.read();
-    // double temperature = dht.getTemperature();
-    // double humidity = dht.getHumidity();
-    // if (isnan(temperature) || isnan(humidity))
-    //   Serial.println("Failed to read from DHT20 sensor!");
-    // else
-    // {
-    //   tb.sendTelemetryData("temperature", temperature);
-    //   tb.sendTelemetryData("humidity", humidity);
-    //   Serial.println("Temp: " + String(temperature) + " *C");
-    //   Serial.println("Humidity: " + String(humidity) +  " %");
-    //   Serial.println("\n \n");
-    // }   
-    tb.sendTelemetryData("temperature", temperature);
-    tb.sendTelemetryData("humidity", humidity);
-    Serial.println("Temp: " + String(temperature) + " *C");
-    Serial.println("Humidity: " + String(humidity) +  " %");
-    temperature +=3 ;
-    humidity += 3;
-
+    // read data from DHT20 sensor
+    dht.read();
+    double temperature = dht.getTemperature();
+    double humidity = dht.getHumidity();
+    if (isnan(temperature) || isnan(humidity))
+      Serial.println("Failed to read from DHT20 sensor!");
+    else
+    {
+      tb.sendTelemetryData("temperature", temperature);
+      tb.sendTelemetryData("humidity", humidity);
+      Serial.println("Temp: " + String(temperature) + " *C");
+      Serial.println("Humidity: " + String(humidity) +  " %");
+      Serial.println("\n \n");
+    }   
     vTaskDelay(5000);
   }
 }

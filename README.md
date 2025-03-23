@@ -5,3 +5,5 @@
    again the program and monitor serial console.
 4. The final step, monitor the change of humidity and temperature
    on server Core IoT.
+
+demonstration video: https://drive.google.com/file/d/1hpTyUVtmQHOayjK6xo4VL0cwvWEiiqRo/view?usp=sharing

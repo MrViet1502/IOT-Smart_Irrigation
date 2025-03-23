@@ -8,8 +8,8 @@
 #include <ThingsBoard.h>
 
 // define the position of pin in I2C protocol
-#define SDA_PIN GPIO_NUM_21
-#define SCL_PIN GPIO_NUM_22
+#define SDA_PIN GPIO_NUM_11
+#define SCL_PIN GPIO_NUM_12
 
 // define the thingsboard information
 #define THINGSBOARD_SERVER  "app.coreiot.io"
