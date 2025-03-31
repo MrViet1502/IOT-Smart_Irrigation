@@ -11,15 +11,6 @@
 #define SDA_PIN GPIO_NUM_11
 #define SCL_PIN GPIO_NUM_12
 
-// define the thingsboard information
-#define THINGSBOARD_SERVER  "app.coreiot.io"
-#define THINGSBOARD_PORT    1883U
-
-
-// define the token of the device
-#define TOKEN_DEVICE        "w1d1cwh8qzkfbf5rfrvk"
-#define MAX_MESSAGE_SIZE    1024U
-
 void taskReadSensor(void* ptrParameter);
 
 #endif

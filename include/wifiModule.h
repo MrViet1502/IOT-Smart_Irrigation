@@ -7,7 +7,6 @@
 #define WIFI_SSID           "onlyPhone"
 #define WIFI_PASSWORD       "DSA2023A"
 
-
 void initWifi(void* ptrParameter);
 void taskCheckWifiConnection(void* ptrParameter);
 
