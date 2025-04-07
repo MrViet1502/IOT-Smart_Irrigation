@@ -9,7 +9,9 @@ void setup() {
   xTaskCreate(taskCheckWifiConnection, "wifiConnection", 4096, NULL, 1, NULL);
   xTaskCreate(taskReadSensor, "readSensor", 16384, NULL, 2, NULL);
   xTaskCreate(taskSchedulerEvent, "schedulerEvent", 4096, NULL, 3, NULL);
-  xTaskCreate(taskSubscribeRPC, "subscribeRPC", 4096, NULL, 4, NULL)
+  xTaskCreate(taskSubscribeRPC, "subscribeRPC", 4096, NULL, 4, NULL);
+}
+
 void loop() {
 
 }
