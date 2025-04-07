@@ -45,11 +45,12 @@ void taskReadSensor(void* ptrParameter)
       {
         tb.sendTelemetryData("temperature", temperature);
         tb.sendTelemetryData("humidity", humidity);
-        Serial.println("Temp: " + String(temperature) + " *C");
-        Serial.println("Humidity: " + String(humidity) +  " %");
+        // Serial.println("Temp: " + String(temperature) + " *C");
+        // Serial.println("Humidity: " + String(humidity) +  " %");
         Serial.println("\n \n");
       }
     }   
     vTaskDelay(5000);
+    tb.loop();
   }
 }
