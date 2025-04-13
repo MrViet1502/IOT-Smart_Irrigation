@@ -3,8 +3,10 @@
 #include "../include/thingsboard.h"
 
 WiFiClient wifiClient;
-Arduino_MQTT_Client mqttClient(wifiClient);
+Arduino_MQTT_Client mqttClient = Arduino_MQTT_Client(wifiClient);
+
 ThingsBoard tb = ThingsBoard(mqttClient, MAX_MESSAGE_SIZE);
+
 
 void taskReadSensor(void* ptrParameter)
 {

@@ -5,7 +5,6 @@
 
 void processSharedAttributes(const Shared_Attribute_Data &data)
 {
-  Serial.println("Binh bo");
   for (auto it = data.begin(); it != data.end(); ++it) 
   {
     Serial.println(it->key().c_str());
@@ -40,6 +39,11 @@ void taskSchedulerEvent(void* ptrParameter)
       }
 
       // subscribe the share attributes
+      // tb.Subscribe_Firmware_Update(callback);
+      // tb.Start_Firmware_Update();
+      // tb.Subscribe_Firmware_Update();
+      // tb.firm
+
       if (!tb.Shared_Attributes_Subscribe(attributes_callback)) {
         Serial.println("Failed to subscribe for shared attribute updates");
       }
