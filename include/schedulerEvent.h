@@ -3,8 +3,14 @@
 
 // #include <ThingsBoard.h>
 #include "../lib/ThingsBoard/Shared_Attribute_Callback.h"
+#include "../lib/HTTPClient/src/HTTPClient.h"
+#include <WiFi.h>
+
+
+#define FIRMWARE_UPDATE_ATTR "fw_url"
 
 void processSharedAttributes(const Shared_Attribute_Data &data);
 void taskSchedulerEvent(void* ptrParameter);
+void taskOTAFirmwareUpdate(void* ptrParameter);
 
 #endif
