@@ -122,8 +122,8 @@ void taskOTAFirmwareUpdate(void* ptrParameter)
 
 void taskSchedulerEvent(void* ptrParameter)
 {
-  constexpr std::array<const char *, 1U> SHARED_ATTRIBUTES_LIST = {
-    LED_STATE_ATTR,
+  constexpr std::array<const char *, 2U> SHARED_ATTRIBUTES_LIST = {
+    LED_STATE_ATTR, FIRMWARE_UPDATE_ATTR,
   };
   const Shared_Attribute_Callback attributes_callback(&processSharedAttributes, SHARED_ATTRIBUTES_LIST.cbegin(), SHARED_ATTRIBUTES_LIST.cend());
   bool flagFirst = false;
