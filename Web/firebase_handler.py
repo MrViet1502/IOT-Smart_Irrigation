@@ -4,14 +4,14 @@ import hashlib
 
 last_hash = None
 firebase_config = {
-    "apiKey": "AIzaSyAeVCPNgXqFnxAWPQPWEvdXReMx2jRwoiE",
+    "apiKey": "AIzaSyAeVCPN=====",
     "authDomain": "iot-esp32-hcmut.firebaseapp.com",
     "databaseURL": "https://iot-esp32-hcmut-default-rtdb.firebaseio.com",
     "projectId": "iot-esp32-hcmut",
     "storageBucket": "iot-esp32-hcmut.firebasestorage.app",
-    "messagingSenderId": "716013476369",
-    "appId": "1:716013476369:web:43272bd3ea480dfd6eafb0",
-    "measurementId": "G-GFMYJYN2S1"
+    "messagingSenderId": "71===",
+    "appId": "1:716013476369:web:43272bd3===",
+    "measurementId": ""
 }
 
 firebase = pyrebase.initialize_app(firebase_config)
