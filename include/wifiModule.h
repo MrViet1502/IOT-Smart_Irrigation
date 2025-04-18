@@ -5,7 +5,7 @@
 #include <WiFi.h>
 
 #define WIFI_SSID           "onlyPhone"
-#define WIFI_PASSWORD       "DSA2023A"
+#define WIFI_PASSWORD       "DSA210364"
 
 void initWifi(void* ptrParameter);
 void taskCheckWifiConnection(void* ptrParameter);
