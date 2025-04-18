@@ -11,8 +11,8 @@ RPC_Response controlLed(const RPC_Data &data) {
   // Serial.println(String(data));
   int newState = int(data);
   Serial.println(newState);
-  // Serial.print("Switch state change: ");
-  // Serial.println(newState);
+  Serial.print("Switch state change: ");
+  Serial.println(newState);
 
   digitalWrite(GPIO_LED, newState);
   // tb.sendAttributeData(LED_STATE_ATTR, digitalRead(GPIO_LED));
