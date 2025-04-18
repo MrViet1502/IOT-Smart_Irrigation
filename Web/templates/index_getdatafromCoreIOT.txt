@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Irrigation System</title>
+</head>
+<body>
+    <h1>Hệ thống Tưới Cây Thông Minh</h1>
+    <p>Độ ẩm đất: {{ data['soil_moisture'] }}%</p>
+    <p>Nhiệt độ: {{ data['temperature'] }}°C</p>
+    <p>Độ ẩm không khí: {{ data['humidity'] }}%</p>
+
+    <button onclick="sendControl('on')">Bật tưới cây</button>
+    <button onclick="sendControl('off')">Tắt tưới cây</button>
+
+    <script>
+        function sendControl(action) {
+            fetch(`/control?action=${action}`)
+              .then(response => response.json())
+              .then(data => alert("Gửi lệnh thành công: " + data.action));
+        }
+    </script>
+</body>
+</html> -->
+
+<!-- 
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Irrigation</title>
+    <meta charset="utf-8">
+    <script>
+        function updateSensorData() {
+            fetch('/data')
+              .then(response => response.json())
+              .then(data => {
+                  document.getElementById("soil").innerText = data.soil_moisture + " %";
+                  document.getElementById("temp").innerText = data.temperature + " °C";
+                  document.getElementById("humid").innerText = data.humidity + " %";
+              });
+        }
+
+        setInterval(updateSensorData, 3000); // cập nhật mỗi 3 giây
+        window.onload = updateSensorData;
+
+        function sendControl(action) {
+            fetch(`/control?action=${action}`)
+              .then(res => res.json())
+              .then(data => alert("Đã gửi: " + data.action));
+        }
+    </script>
+</head>
+<body>
+    <h1>Hệ thống tưới cây thông minh</h1>
+
+    <p>Độ ẩm đất: <span id="soil">--</span></p>
+    <p>Nhiệt độ: <span id="temp">--</span></p>
+    <p>Độ ẩm không khí: <span id="humid">--</span></p>
+
+    <button onclick="sendControl('on')">Bật tưới</button>
+    <button onclick="sendControl('off')">Tắt tưới</button>
+</body>
+</html> -->
+<!-- <!DOCTYPE html>
+<html>
+<head>
+    <title>Smart Irrigation</title>
+    <meta charset="utf-8">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/static/js/chart.js"></script>
+    <style>
+        .chart-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .chart-box {
+            flex: 1 1 30%;
+            min-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hệ thống tưới cây thông minh</h1>
+
+    <p>Độ ẩm đất: <span id="soil">--</span></p>
+    <p>Nhiệt độ: <span id="temp">--</span></p>
+    <p>Độ ẩm không khí: <span id="humid">--</span></p>
+
+    <div class="chart-container">
+        <div class="chart-box">
+            <canvas id="soilChart" width="400" height="200"></canvas>
+        </div>
+        <div class="chart-box">
+            <canvas id="tempChart" width="400" height="200"></canvas>
+        </div>
+        <div class="chart-box">
+            <canvas id="humidChart" width="400" height="200"></canvas>
+        </div>
+    </div>
+
+    <button onclick="sendControl('on')">Bật tưới</button>
+    <button onclick="sendControl('off')">Tắt tưới</button>
+</body>
+</html>

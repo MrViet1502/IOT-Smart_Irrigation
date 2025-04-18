@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>🌿 Smart Irrigation Dashboard</title>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background-color: #f2fef4;
+      padding: 40px;
+      color: #333;
+    }
+
+    h1 {
+      color: #2e7d32;
+      font-size: 28px;
+    }
+
+    h3 {
+      color: #388e3c;
+      margin-top: 30px;
+    }
+
+    .sensor-data, .control-panel {
+      padding: 20px;
+      border: 1px solid #c8e6c9;
+      border-radius: 10px;
+      background-color: #ffffff;
+      margin-bottom: 20px;
+      max-width: 400px;
+    }
+
+    p {
+      font-size: 18px;
+      margin: 8px 0;
+    }
+
+    #status-msg {
+      margin-top: 10px;
+      font-weight: bold;
+      color: #2e7d32;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      margin: 10px 5px;
+      cursor: pointer;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      background-color: #43a047;
+    }
+
+    button:hover {
+      background-color: #2e7d32;
+    }
+
+    button.off {
+      background-color: #e53935;
+    }
+
+    button.off:hover {
+      background-color: #b71c1c;
+    }
+  </style>
+  <script>
+    async function fetchData() {
+      try {
+        const res = await fetch("/api/data");
+        const data = await res.json();
+        document.getElementById("temp").innerText = data.temperature.value + " °C";
+        document.getElementById("humid").innerText = data.humidity.value + " %";
+        document.getElementById("gas").innerText = data.mq2_analog.value;
+        document.getElementById("timestamp").innerText = data.temperature.timestamp;
+      } catch (err) {
+        console.error("❌ Không thể tải dữ liệu:", err);
+        document.getElementById("timestamp").innerText = "Mất kết nối tới Flask...";
+      }
+    }
+
+    async function sendCommand(state) {
+      try {
+        const res = await fetch("/api/control", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ command: state ? "on" : "off" })
+        });
+
+        const result = await res.json();
+
+        const msg = result.status === "success"
+          ? `✅ Đã gửi lệnh thành công! Trạng thái LED: ${result.led ? "BẬT " : "TẮT 🛑"}`
+          : `❌ Gửi lệnh thất bại: ${result.error || "Không rõ lỗi"}`;
+
+        document.getElementById("status-msg").innerText = msg;
+      } catch (err) {
+        document.getElementById("status-msg").innerText = "❌ Lỗi gửi lệnh!";
+        console.error("Gửi lệnh lỗi:", err);
+      }
+}
+
+
+    window.onload = () => {
+      fetchData();
+      setInterval(fetchData, 5000);
+    };
+  </script>
+</head>
+<body>
+  <h1>🌿 Hệ thống tưới cây thông minh</h1>
+
+  <div class="sensor-data">
+    <h3>📈 Giám sát cảm biến:</h3>
+    <p>Nhiệt độ: <span id="temp">--</span></p>
+    <p>Độ ẩm: <span id="humid">--</span></p>
+    <p>Khí gas (MQ2): <span id="gas">--</span></p>
+    <p>⏰ Cập nhật: <span id="timestamp">--</span></p>
+  </div>
+
+  <div class="control-panel">
+    <h3>🕹️ Điều khiển led:</h3>
+    <button onclick="sendCommand(true)"> Bật </button>
+    <button class="off" onclick="sendCommand(false)">🛑 Tắt </button>
+    <p id="status-msg"></p>
+  </div>
+</body>
+</html>
+
+
+
+<!-- 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Smart Irrigation System</title>
+  <script>
+    async function fetchData() {
+      try {
+        const res = await fetch("/api/data");
+        const data = await res.json();
+        document.getElementById("temp").innerText = data.temperature.value + " °C";
+        document.getElementById("humid").innerText = data.humidity.value + " %";
+        document.getElementById("gas").innerText = data.mq2_analog.value;
+        document.getElementById("timestamp").innerText = data.temperature.timestamp;
+      } catch (err) {
+        console.error("❌ Không thể tải dữ liệu:", err);
+        document.getElementById("timestamp").innerText = "Mất kết nối tới Flask...";
+      }
+    }
+
+    async function sendCommand(command) {
+      try {
+        const res = await fetch("/api/control", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ command })
+        });
+        const result = await res.json();
+        alert("📡 Đã gửi lệnh: " + (result.sent || result.error));
+      } catch (err) {
+        alert("❌ Lỗi gửi lệnh!");
+        console.error("RPC error:", err);
+      }
+    }
+
+    setInterval(fetchData, 5000);
+    window.onload = fetchData;
+  </script>
+</head>
+<body>
+  <h1>🌿 Hệ thống tưới cây thông minh</h1>
+  <h3>Giám sát cảm biến:</h3>
+  <p>Nhiệt độ: <span id="temp">--</span></p>
+  <p>Độ ẩm: <span id="humid">--</span></p>
+  <p>MQ2: <span id="gas">--</span></p>
+  <p>⏰ Cập nhật: <span id="timestamp">--</span></p>
+
+  <h3>🕹️ Điều khiển máy bơm:</h3>
+  <button onclick="sendCommand('on')">💧 Bật tưới</button>
+  <button onclick="sendCommand('off')">🛑 Tắt tưới</button>
+</body>
+</html> -->
