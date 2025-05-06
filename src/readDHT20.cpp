@@ -1,6 +1,7 @@
 #include "../include/readDHT20.h"
 #include "../include/wifiModule.h"
 #include "../include/thingsboard.h"
+#include "../include/schedulerEvent.h"
 
 WiFiClient wifiClient;
 Arduino_MQTT_Client mqttClient = Arduino_MQTT_Client(wifiClient);
@@ -20,7 +21,13 @@ void taskReadSensor(void* ptrParameter)
 
   while (true)
   {
-
+    if (OTAOnProgress == true)
+    {
+      Serial.println("OTA in progress, skip read sensor");
+      vTaskDelay(5000);
+      tb.loop();
+      continue;
+    }
     // read data from DHT20 sensor
     dht.read();
     double temperature = dht.getTemperature();
@@ -30,6 +37,7 @@ void taskReadSensor(void* ptrParameter)
     else
     {
       // check connection to thingsboard server
+
       if (!tb.connected()) 
       {
         Serial.print("Connecting to: ");

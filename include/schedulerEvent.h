@@ -9,6 +9,8 @@
 
 #define FIRMWARE_UPDATE_ATTR "fw_url"
 
+extern bool OTAOnProgress;
+
 void processSharedAttributes(const Shared_Attribute_Data &data);
 void taskSchedulerEvent(void* ptrParameter);
 void taskOTAFirmwareUpdate(void* ptrParameter);

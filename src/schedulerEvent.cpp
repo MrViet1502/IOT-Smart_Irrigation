@@ -2,9 +2,12 @@
 #include "../include/ledControl.h"
 #include "../include/thingsboard.h"
 #include <Update.h>
+#include <WiFiClientSecure.h> 
+#include <ArduinoOTA.h>
 
 bool newFirmwareUpdateAvailable = false;
 char* firmwareUrl = nullptr;
+bool OTAOnProgress = false;
 
 void processSharedAttributes(const Shared_Attribute_Data &data)
 {
@@ -29,71 +32,126 @@ void processSharedAttributes(const Shared_Attribute_Data &data)
   }
 }
 
-bool performOTAUpdate(char* firmwareUpdateURL)
+// bool performOTAUpdate(char* firmwareUpdateURL)
+// {
+//   WiFiClient client;
+//   HTTPClient http;
+
+//   Serial.print("Connecting to firmware URL: ");
+//   Serial.println(firmwareUpdateURL);
+
+//   if (!http.begin(client, firmwareUpdateURL)) {
+//     Serial.println("Failed to initialize HTTP connection.");
+//     return false;
+//   }
+
+//   int httpCode = http.GET();
+//   if (httpCode != 200) {
+//     Serial.print("HTTP GET failed with code: ");
+//     Serial.println(httpCode);
+//     http.end();
+//     return false;
+//   }
+
+//   int contentLength = http.getSize();
+//   if (contentLength <= 0) {
+//     Serial.println("Invalid content length.");
+//     http.end();
+//     return false;
+//   }
+
+//   bool canBegin = Update.begin(contentLength);
+//   if (!canBegin) {
+//     Serial.println("Not enough space to begin OTA update.");
+//     http.end();
+//     return false;
+//   }
+
+//   WiFiClient* stream = http.getStreamPtr();
+//   size_t written = 0;
+//   uint8_t buffer[128] = {0};
+
+//   while (http.connected() && written < contentLength) {
+//     size_t available = stream->available();
+//     if (available) {
+//       size_t bytesRead = stream->readBytes(buffer, min(available, sizeof(buffer)));
+//       written += Update.write(buffer, bytesRead);
+//       Serial.print(".");
+//     }
+//   }
+
+//   if (Update.end()) {
+//     if (Update.isFinished()) {
+//       Serial.println("\nOTA update completed successfully.");
+//       http.end();
+//       return true;
+//     } else {
+//       Serial.println("\nOTA update not finished.");
+//     }
+//   } else {
+//     Serial.print("\nOTA update failed. Error #: ");
+//     Serial.println(Update.getError());
+//   }
+
+//   http.end();
+//   return false;
+// }
+
+
+bool performOTAUpdate(String url)
 {
-  WiFiClient client;
   HTTPClient http;
-
-  Serial.print("Connecting to firmware URL: ");
-  Serial.println(firmwareUpdateURL);
-
-  if (!http.begin(client, firmwareUpdateURL)) {
-    Serial.println("Failed to initialize HTTP connection.");
-    return false;
-  }
-
+  http.begin(url);
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
   int httpCode = http.GET();
-  if (httpCode != 200) {
-    Serial.print("HTTP GET failed with code: ");
-    Serial.println(httpCode);
-    http.end();
-    return false;
+
+  if (httpCode == 200)
+  {
+      int len = http.getSize();
+      WiFiClient *stream = http.getStreamPtr();
+
+      if (!Update.begin(len))
+      {
+          Serial.println("Update Begin Failed");
+          return false;
+      }
+
+      size_t written = Update.writeStream(*stream);
+      if (written == len)
+      {
+          Serial.println("Written : " + String(written) + " successfully");
+      }
+      else
+      {
+          Serial.println("Written only : " + String(written) + "/" + String(len) + ". Retry?");
+          return false;
+      }
+
+      if (Update.end())
+      {
+          if (Update.isFinished())
+          {
+              Serial.println("Update successfully completed. Rebooting.");
+              return true;
+          }
+          else
+          {
+              Serial.println("Update not finished? Something went wrong!");
+              return false;
+          }
+      }
+      else
+      {
+          Serial.println("Update.end() failed: " + String(Update.getError()));
+          return false;
+      }
   }
-
-  int contentLength = http.getSize();
-  if (contentLength <= 0) {
-    Serial.println("Invalid content length.");
-    http.end();
-    return false;
+  else
+  {
+      Serial.printf("HTTP GET failed. Code: %d\n", httpCode);
+      return false;
   }
-
-  bool canBegin = Update.begin(contentLength);
-  if (!canBegin) {
-    Serial.println("Not enough space to begin OTA update.");
-    http.end();
-    return false;
-  }
-
-  WiFiClient* stream = http.getStreamPtr();
-  size_t written = 0;
-  uint8_t buffer[128] = {0};
-
-  while (http.connected() && written < contentLength) {
-    size_t available = stream->available();
-    if (available) {
-      size_t bytesRead = stream->readBytes(buffer, min(available, sizeof(buffer)));
-      written += Update.write(buffer, bytesRead);
-      Serial.print(".");
-    }
-  }
-
-  if (Update.end()) {
-    if (Update.isFinished()) {
-      Serial.println("\nOTA update completed successfully.");
-      http.end();
-      return true;
-    } else {
-      Serial.println("\nOTA update not finished.");
-    }
-  } else {
-    Serial.print("\nOTA update failed. Error #: ");
-    Serial.println(Update.getError());
-  }
-
-  http.end();
-  return false;
 }
-
 
 void taskOTAFirmwareUpdate(void* ptrParameter)
 {
@@ -101,22 +159,23 @@ void taskOTAFirmwareUpdate(void* ptrParameter)
   {
     if (newFirmwareUpdateAvailable && firmwareUrl != nullptr)
     {
+      OTAOnProgress = true;
       Serial.println("Starting OTA firmware update...");
       if (performOTAUpdate(firmwareUrl))
       {
         Serial.println("Firmware update successful. Restarting device...");
-        ESP.restart(); // Restart the device after successful update
+        esp_restart();
       }
       else
       {
         Serial.println("Firmware update failed.");
       }
-      // Reset the flags after attempting the update
       newFirmwareUpdateAvailable = false;
+      OTAOnProgress = false;
       free(firmwareUrl);
       firmwareUrl = nullptr;
     }
-    vTaskDelay(8000);
+    vTaskDelay(5000);
   }
 }
 
@@ -129,6 +188,13 @@ void taskSchedulerEvent(void* ptrParameter)
   bool flagFirst = false;
   while   (true)
   {
+    if (OTAOnProgress == true)
+    {
+      Serial.println("OTA in progress, skip subscribe shared attributes");
+      vTaskDelay(5000);
+      tb.loop();
+      continue;
+    }
     if (!tb.connected())
     {
       // connect to thingsboard
@@ -138,12 +204,6 @@ void taskSchedulerEvent(void* ptrParameter)
       {
         Serial.println("Connected to thingsboard");
       }
-
-      // subscribe the share attributes
-      // tb.Subscribe_Firmware_Update(callback);
-      // tb.Start_Firmware_Update();
-      // tb.Subscribe_Firmware_Update();
-      // tb.firm
 
       if (!tb.Shared_Attributes_Subscribe(attributes_callback)) {
         Serial.println("Failed to subscribe for shared attribute updates");

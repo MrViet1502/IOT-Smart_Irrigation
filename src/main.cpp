@@ -10,7 +10,7 @@ void setup() {
   xTaskCreate(taskReadSensor,           "readSensor",         16384,  NULL, 2, NULL);
   xTaskCreate(taskSchedulerEvent,       "schedulerEvent",     4096,   NULL, 3, NULL);
   xTaskCreate(taskSubscribeRPC,         "subscribeRPC",       4096,   NULL, 4, NULL);
-  xTaskCreate(taskOTAFirmwareUpdate,    "otaFirmwareUpdate",  4096,   NULL, 5, NULL);
+  xTaskCreate(taskOTAFirmwareUpdate,    "otaFirmwareUpdate",  16384,   NULL, 5, NULL);
 }
 
 void loop() {

@@ -1,5 +1,6 @@
 #include "../include/wifiModule.h"
 #include <ThingsBoard.h>
+#include "../include/schedulerEvent.h"
 
 void initWifi(void* ptrParameter) 
 {
@@ -15,13 +16,19 @@ void initWifi(void* ptrParameter)
 void taskCheckWifiConnection(void* ptrParameter) 
 {
   Serial.println("Connecting to  ...");
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  initWifi(NULL);
   while (true)
   {
+    if (OTAOnProgress == true)
+    {
+      Serial.println("OTA in progress, skip wifi check");
+      vTaskDelay(10000);
+      continue;
+    }
     if (WiFi.status() != WL_CONNECTED)
       initWifi(NULL);
     // else
     //   Serial.println("Connected to Wifi");
-    vTaskDelay(5000);
+    vTaskDelay(10000);
   }
 }
