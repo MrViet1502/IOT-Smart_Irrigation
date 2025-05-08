@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Gas Chart</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/2913/2913465.png">
+    <link rel="stylesheet" href="/static/css/mystyle.css">
+
+   
+</head>
+<body>
+
+<header class="bg-white p-3 shadow d-flex justify-content-between">
+    <h4><span class="text-success">IoT</span><span class="text-info">WQMS</span>MONITOR</h4>
+</header>
+
+<div class="sidebar">
+    <a href="/dashboard" class="sBarBtn">Dashboard</a>
+    <a href="/tempChart" class="sBarBtn">Temperature</a>
+    <a href="/humChart" class="sBarBtn">Humidity</a>
+    <a href="/gasChart" class="sBarBtn">Gas</a>
+    <a href="/logout" class="sBarBtn">Logout</a>
+</div>
+
+
+<div class="content">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+            <li class="breadcrumb-item active">Gas</li>
+        </ol>
+    </nav>
+
+    <h2 class="my-4 text-center">🌡️ Gas Chart</h2>
+
+    <div class="chart-card">
+        <canvas id="gasChart" height="120"></canvas>
+        <p class="text-muted mt-3 text-center">Realtime gas updates every 10 seconds</p>
+    </div>
+</div>
+
+<footer class="text-center">
+    <p>All Rights Reserved &copy; Smart Irrigation System</p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script src="/static/js/chart_config.js"></script>
+<script src="/static/js/chart_update.js"></script>
+<script>
+createChart(chartConfigs.gas);
+</script>
+
+</body>
+</html>

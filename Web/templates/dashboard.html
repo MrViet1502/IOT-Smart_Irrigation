@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Irrigation Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Toastr CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <!-- Toastr JS -->
+    
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/2913/2913465.png">
+    <link rel="stylesheet" href="/static/css/mystyle.css">
+    
+    <meta name="csrf-token" content="{{ csrf_token_value }}">
+
+</head>
+<body>
+
+<!-- Header -->
+<header class="bg-white p-3 shadow d-flex justify-content-between">
+    <h4><span class="text-success">IoT</span><span class="text-info">WQMS</span>MONITOR</h4>
+</header>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <a href="/dashboard" class="sBarBtn">Dashboard</a>
+    <a href="/tempChart" class="sBarBtn">Temperature</a>
+    <a href="/humChart" class="sBarBtn">Humidity</a>
+    <a href="/gasChart" class="sBarBtn">Gas</a>
+    <a href="/logout" class="sBarBtn">Logout</a>
+</div>
+
+<!-- Content -->
+<div class="content">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">Home</li>
+            <li class="breadcrumb-item active">Dashboard</li>
+        </ol>
+    </nav>
+
+    <h1 class="my-4 text-center">🌿 Smart Irrigation Dashboard</h1>
+
+    <div class="row text-center">
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5>🌡️ Temperature</h5>
+                    <h3 id="temp">-- °C</h3>
+                    <p id="temp_time">--</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5>💧 Humidity</h5>
+                    <h3 id="humid">-- %</h3>
+                    <p id="humid_time">--</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5>🔥 Gas</h5>
+                    <h3 id="gas">--</h3>
+                    <p id="gas_time">--</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2 class="my-4 text-center">🕹️ Control LED</h2>
+    <div class="text-center led-control">
+        <button class="btn btn-success" onclick="sendCommand('on')">Bật LED</button>
+        <button class="btn btn-danger" onclick="sendCommand('off')">Tắt LED</button>
+        <p id="led_status"></p>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="text-center">
+    <p>All Rights Reserved &copy; Smart Irrigation System</p>
+</footer>
+
+<!-- JS + AJAX -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script src="/static/js/dashboard.js"></script>
+
+
+</body>
+</html>
