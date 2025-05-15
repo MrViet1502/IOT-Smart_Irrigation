@@ -7,7 +7,14 @@ import time
 import csv
 import os
 import json
+from apscheduler.schedulers.background import BackgroundScheduler
 
+from threading import Thread
+from datetime import datetime
+
+
+SCHEDULE_FILE = "schedules.json"
+schedules = []  # Each item: {"time": "HH:MM", "command": "on" or "off"}
 app = Flask(__name__, template_folder="templates")
 app.secret_key = "qwertyuiop"  # Đặt key bảo mật riêng
 csrf = CSRFProtect(app)
@@ -15,7 +22,7 @@ csrf = CSRFProtect(app)
 # ----------- Cấu hình IoT ThingsBoard -------------
 THINGSBOARD_URL = "https://app.coreiot.io"
 DEVICE_ID = "1f5f2270-f990-11ef-a887-6d1a184f2bb5"
-JWT_TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJuLnF1b2N2aWV0MTUwMkBnbWFpbC5jb20iLCJ1c2VySWQiOiI5NDMyNTg5MC1lZTcwLTExZWYtODdiNS0yMWJjY2Y3ZDI5ZDUiLCJzY29wZXMiOlsiVEVOQU5UX0FETUlOIl0sInNlc3Npb25JZCI6IjQ2NzdiMmYwLWE1OWMtNDY0Yi1hMTI4LTY4N2FmNGEwOGMzOSIsImV4cCI6MTc0NzMyNjk1NywiaXNzIjoiY29yZWlvdC5pbyIsImlhdCI6MTc0NzMxNzk1NywiZmlyc3ROYW1lIjoiVmnhu4d0IiwibGFzdE5hbWUiOiJOZ3V54buFbiBRdeG7kWMiLCJlbmFibGVkIjp0cnVlLCJpc1B1YmxpYyI6ZmFsc2UsInRlbmFudElkIjoiOTQyYTkwNjAtZWU3MC0xMWVmLTg3YjUtMjFiY2NmN2QyOWQ1IiwiY3VzdG9tZXJJZCI6IjEzODE0MDAwLTFkZDItMTFiMi04MDgwLTgwODA4MDgwODA4MCJ9.gDzo-9uw4eAxoVMf8oV0t2JtUFFjBX4SjphSeKv2y61QGTwvL72hj9optK1iGWWUQz8BkR-evm4tzrdTJAzZJg"
+JWT_TOKEN = "s.............Q"
 HEADERS = {"X-Authorization": f"Bearer {JWT_TOKEN}"}
 
 # ----------- Cấu hình lưu dữ liệu -------------
@@ -29,6 +36,9 @@ MAX_ROWS = 40
 def inject_csrf_token():
     return {"csrf_token_value": generate_csrf()}
 
+if os.path.exists(SCHEDULE_FILE):
+    with open(SCHEDULE_FILE, "r") as f:
+        schedules = json.load(f)
 # ----------------------------------------
 # Helper: Lưu dữ liệu vào CSV
 def save_to_csv(file_path, timestamp, value):
@@ -241,13 +251,75 @@ def collector_loop():
 
         time.sleep(10)
 
+
+
+# Add this route
+@app.route("/scheduler")
+def scheduler_page():
+    if 'user_id' in session:
+        return render_template("scheduler.html")
+    return redirect(url_for("login"))
+
+# Add these API endpoints
+@app.route("/api/schedule", methods=["GET", "POST"])
+@csrf.exempt
+def manage_schedule():
+    global schedules
+    if request.method == "GET":
+        return jsonify(schedules)
+
+    data = request.get_json()
+    time_str = data.get("time")
+    command = data.get("command")
+
+    if not time_str or command not in ["on", "off"]:
+        return jsonify({"error": "Invalid input"}), 400
+
+    schedules.append({"time": time_str, "command": command})
+    with open(SCHEDULE_FILE, "w") as f:
+        json.dump(schedules, f)
+    return jsonify({"status": "added"})
+
+@app.route("/api/schedule/<int:index>", methods=["DELETE"])
+@csrf.exempt
+def delete_schedule(index):
+    global schedules
+    if 0 <= index < len(schedules):
+        schedules.pop(index)
+        with open(SCHEDULE_FILE, "w") as f:
+            json.dump(schedules, f)
+        return jsonify({"status": "deleted"})
+    return jsonify({"error": "Invalid index"}), 404
+
+# Background thread to check schedules every minute
+def run_scheduled_tasks():
+    last_executed = set()
+    while True:
+        now = datetime.now().strftime("%H:%M")
+        for entry in schedules:
+            key = f"{now}-{entry['command']}"
+            if entry["time"] == now and key not in last_executed:
+                url = f"{THINGSBOARD_URL}/api/plugins/telemetry/DEVICE/{DEVICE_ID}/attributes/SHARED_SCOPE"
+                body = {"led": entry["command"] == "on"}
+                try:
+                    requests.post(url, headers=HEADERS, json=body, timeout=5)
+                    print(f"[Scheduler] Sent command: {entry['command']} at {now}")
+                    last_executed.add(key)
+                except Exception as e:
+                    print("Scheduler send error:", e)
+        time.sleep(60)
+
+
+
 # ----------------------------------------
 # START SERVER
 if __name__ == "__main__":
     collector_thread = threading.Thread(target=collector_loop, daemon=True)
+    schedule_thread = threading.Thread(target=run_scheduled_tasks, daemon=True)
     collector_thread.start()
-
+    schedule_thread.start()
     app.run(debug=True)
+
 
 
 # from flask import Flask, jsonify, render_template, request
