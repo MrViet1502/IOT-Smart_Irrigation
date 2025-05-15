@@ -6,6 +6,7 @@ import threading
 import time
 import csv
 import os
+import json
 
 app = Flask(__name__, template_folder="templates")
 app.secret_key = "qwertyuiop"  # Đặt key bảo mật riêng
@@ -14,7 +15,7 @@ csrf = CSRFProtect(app)
 # ----------- Cấu hình IoT ThingsBoard -------------
 THINGSBOARD_URL = "https://app.coreiot.io"
 DEVICE_ID = "1f5f2270-f990-11ef-a887-6d1a184f2bb5"
-JWT_TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzd"
+JWT_TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJuLnF1b2N2aWV0MTUwMkBnbWFpbC5jb20iLCJ1c2VySWQiOiI5NDMyNTg5MC1lZTcwLTExZWYtODdiNS0yMWJjY2Y3ZDI5ZDUiLCJzY29wZXMiOlsiVEVOQU5UX0FETUlOIl0sInNlc3Npb25JZCI6IjQ2NzdiMmYwLWE1OWMtNDY0Yi1hMTI4LTY4N2FmNGEwOGMzOSIsImV4cCI6MTc0NzMyNjk1NywiaXNzIjoiY29yZWlvdC5pbyIsImlhdCI6MTc0NzMxNzk1NywiZmlyc3ROYW1lIjoiVmnhu4d0IiwibGFzdE5hbWUiOiJOZ3V54buFbiBRdeG7kWMiLCJlbmFibGVkIjp0cnVlLCJpc1B1YmxpYyI6ZmFsc2UsInRlbmFudElkIjoiOTQyYTkwNjAtZWU3MC0xMWVmLTg3YjUtMjFiY2NmN2QyOWQ1IiwiY3VzdG9tZXJJZCI6IjEzODE0MDAwLTFkZDItMTFiMi04MDgwLTgwODA4MDgwODA4MCJ9.gDzo-9uw4eAxoVMf8oV0t2JtUFFjBX4SjphSeKv2y61QGTwvL72hj9optK1iGWWUQz8BkR-evm4tzrdTJAzZJg"
 HEADERS = {"X-Authorization": f"Bearer {JWT_TOKEN}"}
 
 # ----------- Cấu hình lưu dữ liệu -------------
@@ -74,6 +75,42 @@ def check_session():
 
 # ----------------------------------------
 # DASHBOARD + GIAO DIỆN
+THRESHOLD_FILE = "thresholds.json"
+
+@app.route("/api/thresholds", methods=["GET"])
+def get_thresholds():
+    try:
+        if os.path.exists(THRESHOLD_FILE):
+            with open(THRESHOLD_FILE, "r") as f:
+                return jsonify(json.load(f))
+    except:
+        pass
+    return jsonify({"temperature": None, "humidity": None, "gas": None})
+
+@app.route("/api/thresholds", methods=["POST"])
+@csrf.exempt
+def save_thresholds():
+    data = request.get_json()
+    type_ = data.get("type")
+    value = data.get("value")
+
+    if not type_ or not isinstance(value, (float, int)):
+        return jsonify({"error": "Invalid threshold"}), 400
+
+    thresholds = {}
+    if os.path.exists(THRESHOLD_FILE):
+        with open(THRESHOLD_FILE, "r") as f:
+            thresholds = json.load(f)
+
+    thresholds[type_] = value
+
+    with open(THRESHOLD_FILE, "w") as f:
+        json.dump(thresholds, f)
+
+    return jsonify({"status": "saved"})
+
+
+
 
 @app.route("/")
 def index():

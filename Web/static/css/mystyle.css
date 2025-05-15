@@ -178,3 +178,8 @@ footer p {
 .toast-warning {
     background-color: #f39c12 !important;
 }
+
+.badge-info {
+    font-size: 13px;
+    padding: 5px 10px;
+}
