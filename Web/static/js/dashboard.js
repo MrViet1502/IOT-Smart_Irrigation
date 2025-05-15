@@ -261,7 +261,7 @@ function saveThreshold() {
             document.getElementById(`threshold-${type}-label`).innerText = `Ngưỡng: ${value} ${type === 'temperature' ? '°C' : type === 'humidity' ? '%' : ''}`;
             $('#thresholdModal').modal('hide');
         } else {
-            toastr.error("❌ Không thể lưu ngưỡng");
+            toastr.error(" Không thể lưu ngưỡng");
         }
     });
 }
