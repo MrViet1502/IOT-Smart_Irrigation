@@ -22,7 +22,7 @@ csrf = CSRFProtect(app)
 # ----------- Cấu hình IoT ThingsBoard -------------
 THINGSBOARD_URL = "https://app.coreiot.io"
 DEVICE_ID = "1f5f2270-f990-11ef-a887-6d1a184f2bb5"
-JWT_TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJuLnF1b2N2aWV0MTUwMkBnbWFpbC5jb20iLCJ1c2VySWQiOiI5NDMyNTg5MC1lZTcwLTExZWYtODdiNS0yMWJjY2Y3ZDI5ZDUiLCJzY29wZXMiOlsiVEVOQU5UX0FETUlOIl0sInNlc3Npb25JZCI6ImUwZWQ2YmYxLWE5ZmMtNDIzNS1iMzFlLTE5MjJkYWU0NDQxMiIsImV4cCI6MTc0NzQxNDAwMywiaXNzIjoiY29yZWlvdC5pbyIsImlhdCI6MTc0NzQwNTAwMywiZmlyc3ROYW1lIjoiVmnhu4d0IiwibGFzdE5hbWUiOiJOZ3V54buFbiBRdeG7kWMiLCJlbmFibGVkIjp0cnVlLCJpc1B1YmxpYyI6ZmFsc2UsInRlbmFudElkIjoiOTQyYTkwNjAtZWU3MC0xMWVmLTg3YjUtMjFiY2NmN2QyOWQ1IiwiY3VzdG9tZXJJZCI6IjEzODE0MDAwLTFkZDItMTFiMi04MDgwLTgwODA4MDgwODA4MCJ9.PZkU7UxJJF7tFi61dvERKNHDkHgDLuuEVaDaMZ49j3OjSH1dJmzxTIQuqRm7b1_u_sGOg0YqFuLIihn4SZUEAA"
+JWT_TOKEN = "eyJhbG....iyA"
 HEADERS = {"X-Authorization": f"Bearer {JWT_TOKEN}"}
 
 # ----------- Cấu hình lưu dữ liệu -------------
@@ -64,7 +64,7 @@ def login():
         username = request.form.get("username")
         password = request.form.get("password")
 
-        if username == "admin" and password == "123456":
+        if username == "admin" and password == "12345":
             session['user_id'] = username
             session.permanent = True
             app.permanent_session_lifetime = timedelta(minutes=30)
