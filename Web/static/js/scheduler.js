@@ -18,11 +18,11 @@ function checkSession() {
 }
 
 function addSchedule() {
-  const time = document.getElementById("scheduleTime").value;
-  const command = document.querySelector("input[name='ledCommand']:checked").value;
+  const time = document.getElementById("time").value;
+  const command = document.getElementById("action").value;
 
-  if (!time) {
-    toastr.error("⏰ Please select a time!");
+  if (!time || !command) {
+    toastr.error("⏰ Please fill all schedule fields!");
     return;
   }
 
@@ -59,7 +59,7 @@ function loadSchedules() {
         const div = document.createElement("div");
         div.className = "d-flex justify-content-between align-items-center border p-2 mb-1";
         div.innerHTML = `
-          <span><strong>${item.time}</strong> → ${item.command === "on" ? "💡 ON" : "💤 OFF"}</span>
+          <span><strong>${item.time}</strong> → ${item.command.toUpperCase()}</span>
           <button class='btn btn-sm btn-danger' onclick='deleteSchedule(${index})'>Delete</button>
         `;
         list.appendChild(div);
@@ -81,7 +81,43 @@ function deleteSchedule(index) {
     });
 }
 
+function triggerOTA() {
+  const url = document.getElementById("otaUrl").value.trim();
+  if (!url.startsWith("http")) {
+    toastr.error("❌ Invalid OTA URL!");
+    return;
+  }
+
+  fetch("/api/control", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRF-Token": csrfToken
+    },
+    body: JSON.stringify({ ota_url: url })
+  })
+    .then(res => res.json())
+    .then(result => {
+      if (result.status === "success") {
+        toastr.success("✅ OTA command sent!");
+      } else {
+        toastr.error("❌ Failed to send OTA command");
+      }
+    })
+    .catch(err => {
+      console.error("Error sending OTA:", err);
+      toastr.error("❌ OTA request error");
+    });
+}
+
 window.onload = () => {
   checkSession();
   loadSchedules();
+
+  document.getElementById("scheduleForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    addSchedule();
+  });
+
+  document.getElementById("otaBtn").addEventListener("click", triggerOTA);
 };

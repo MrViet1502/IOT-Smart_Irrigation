@@ -22,7 +22,7 @@ csrf = CSRFProtect(app)
 # ----------- Cấu hình IoT ThingsBoard -------------
 THINGSBOARD_URL = "https://app.coreiot.io"
 DEVICE_ID = "1f5f2270-f990-11ef-a887-6d1a184f2bb5"
-JWT_TOKEN = "s.............Q"
+JWT_TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJuLnF1b2N2aWV0MTUwMkBnbWFpbC5jb20iLCJ1c2VySWQiOiI5NDMyNTg5MC1lZTcwLTExZWYtODdiNS0yMWJjY2Y3ZDI5ZDUiLCJzY29wZXMiOlsiVEVOQU5UX0FETUlOIl0sInNlc3Npb25JZCI6ImUwZWQ2YmYxLWE5ZmMtNDIzNS1iMzFlLTE5MjJkYWU0NDQxMiIsImV4cCI6MTc0NzQxNDAwMywiaXNzIjoiY29yZWlvdC5pbyIsImlhdCI6MTc0NzQwNTAwMywiZmlyc3ROYW1lIjoiVmnhu4d0IiwibGFzdE5hbWUiOiJOZ3V54buFbiBRdeG7kWMiLCJlbmFibGVkIjp0cnVlLCJpc1B1YmxpYyI6ZmFsc2UsInRlbmFudElkIjoiOTQyYTkwNjAtZWU3MC0xMWVmLTg3YjUtMjFiY2NmN2QyOWQ1IiwiY3VzdG9tZXJJZCI6IjEzODE0MDAwLTFkZDItMTFiMi04MDgwLTgwODA4MDgwODA4MCJ9.PZkU7UxJJF7tFi61dvERKNHDkHgDLuuEVaDaMZ49j3OjSH1dJmzxTIQuqRm7b1_u_sGOg0YqFuLIihn4SZUEAA"
 HEADERS = {"X-Authorization": f"Bearer {JWT_TOKEN}"}
 
 # ----------- Cấu hình lưu dữ liệu -------------
@@ -208,12 +208,25 @@ def load_csv_to_json(file_path):
 @csrf.exempt
 def control_device():
     payload = request.get_json()
-    command = payload.get("command")
 
+    # Trường hợp gửi lệnh OTA update
+    if "ota_url" in payload:
+        ota_url = payload["ota_url"]
+        url = f"{THINGSBOARD_URL}/api/plugins/telemetry/DEVICE/{DEVICE_ID}/attributes/SHARED_SCOPE"
+        body = {"fw_url": ota_url}
+        try:
+            response = requests.post(url, headers=HEADERS, json=body, timeout=5)
+            response.raise_for_status()
+            return jsonify({"status": "success", "type": "ota"})
+        except requests.exceptions.RequestException as e:
+            return jsonify({"error": f"OTA request failed: {str(e)}"}), 500
+
+    # Trường hợp gửi lệnh bật/tắt LED
+    command = payload.get("command")
     if command not in ["on", "off"]:
         return jsonify({"error": "Invalid command"}), 400
 
-    led_state = True if command == "on" else False
+    led_state = command == "on"
     url = f"{THINGSBOARD_URL}/api/plugins/telemetry/DEVICE/{DEVICE_ID}/attributes/SHARED_SCOPE"
     body = {"led": led_state}
 
@@ -222,7 +235,7 @@ def control_device():
         response.raise_for_status()
         return jsonify({"status": "success", "led": led_state})
     except requests.exceptions.RequestException as e:
-        return jsonify({"error": f"Request exception: {str(e)}"}), 500
+        return jsonify({"error": f"LED request failed: {str(e)}"}), 500
 
 # ----------------------------------------
 # BACKGROUND COLLECTOR: lấy dữ liệu mỗi 10 giây ghi CSV
@@ -249,7 +262,7 @@ def collector_loop():
         except Exception as e:
             print("Collector error:", e)
 
-        time.sleep(10)
+        time.sleep(50)
 
 
 
@@ -334,7 +347,7 @@ if __name__ == "__main__":
 
 # THINGSBOARD_URL = "https://app.coreiot.io"
 # DEVICE_ID = "1f5f2270-f990-11ef-a887-6d1a184f2bb5"
-# JWT_TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJuLnF1b2N2aWV0MTUwMkBnbWFpbC5jb20iLCJ1c2VySWQiOiI5NDMyNTg5MC1lZTcwLTExZWYtODdiNS0yMWJjY2Y3ZDI5ZDUiLCJzY29wZXMiOlsiVEVOQU5UX0FETUlOIl0sInNlc3Npb25JZCI6IjMyZGFiNjYzLWUxZGQtNDBhYy04NjllLTNhZmFmM2YzNGM3MCIsImV4cCI6MTc0NjcyMTgyMSwiaXNzIjoiY29yZWlvdC5pbyIsImlhdCI6MTc0NjcxMjgyMSwiZmlyc3ROYW1lIjoiVmnhu4d0IiwibGFzdE5hbWUiOiJOZ3V54buFbiBRdeG7kWMiLCJlbmFibGVkIjp0cnVlLCJpc1B1YmxpYyI6ZmFsc2UsInRlbmFudElkIjoiOTQyYTkwNjAtZWU3MC0xMWVmLTg3YjUtMjFiY2NmN2QyOWQ1IiwiY3VzdG9tZXJJZCI6IjEzODE0MDAwLTFkZDItMTFiMi04MDgwLTgwODA4MDgwODA4MCJ9.rxJciLSX7o51cxp4iGXyXCE6pg5Ouc8Z9aZdrbL_UaDV1keQmd6_rYYa1MJkhk5ZeZvbFKo8gTzsECdfaUWIcQ"
+# JWT_TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIcQ"
 # HEADERS = {"X-Authorization": f"Bearer {JWT_TOKEN}"}
 
 # CSV_TEMP = "temperature_data.csv"

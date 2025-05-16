@@ -1,65 +1,78 @@
-<!-- templates/scheduler.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>LED Scheduler</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="csrf-token" content="{{ csrf_token_value }}">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
-    <link rel="stylesheet" href="/static/css/mystyle.css">
+  <meta charset="UTF-8">
+  <title>Scheduler & OTA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token_value }}">
+
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+  <link rel="stylesheet" href="/static/css/mystyle.css">
 </head>
 <body>
 
 <header class="bg-white p-3 shadow d-flex justify-content-between">
-    <h4><span class="text-success">IoT</span><span class="text-info">WQMS</span>MONITOR</h4>
+  <h4><span class="text-success">IoT</span><span class="text-info">WQMS</span>MONITOR</h4>
 </header>
 
 <div class="sidebar">
-    <a href="/dashboard" class="sBarBtn">Dashboard</a>
-    <a href="/tempChart" class="sBarBtn">Temperature</a>
-    <a href="/humChart" class="sBarBtn">Humidity</a>
-    <a href="/gasChart" class="sBarBtn">Gas</a>
-    <a href="/scheduler" class="sBarBtn active">Scheduler</a>
-    <a href="/logout" class="sBarBtn">Logout</a>
+  <a href="/dashboard" class="sBarBtn">Dashboard</a>
+  <a href="/tempChart" class="sBarBtn">Temperature</a>
+  <a href="/humChart" class="sBarBtn">Humidity</a>
+  <a href="/gasChart" class="sBarBtn">Gas</a>
+  <a href="/scheduler" class="sBarBtn active">Scheduler</a>
+  <a href="/logout" class="sBarBtn">Logout</a>
 </div>
 
 <div class="content">
-    <h2 class="text-center my-4">🕒 LED Scheduler</h2>
+  <h2 class="text-center my-4">⚙️ LED Scheduler & OTA Update</h2>
 
-    <div class="card p-4 mb-4">
+  <div class="row">
+    <!-- Scheduler Section -->
+    <div class="col-md-6">
+      <div class="card p-4 mb-4">
+        <h5>📅 Schedule LED</h5>
         <form id="scheduleForm" class="row g-3">
-            <div class="col-md-6">
-                <label for="time" class="form-label">Set Time</label>
-                <input type="time" id="scheduleTime" class="form-control" required>
-            </div>
-            <div class="col-md-6">
-                <label class="form-label d-block">Action</label>
-                <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="ledCommand" value="on" id="ledOn" checked>
-                <label class="form-check-label" for="ledOn">Turn ON</label>
-                </div>
-                <div class="form-check form-check-inline">
-                <input class="form-check-input" type="radio" name="ledCommand" value="off" id="ledOff">
-                <label class="form-check-label" for="ledOff">Turn OFF</label>
-                </div>
-
-            </div>
-            <div class="col-md-12 mt-3">
-                <button class="btn btn-success" type="submit">Add Schedule</button>
-            </div>
+          <div class="col-md-6">
+            <label for="time" class="form-label">Set Time</label>
+            <input type="time" id="time" class="form-control" required>
+          </div>
+          <div class="col-md-6">
+            <label for="action" class="form-label">Action</label>
+            <select id="action" class="form-control" required>
+              <option value="on">Turn ON</option>
+              <option value="off">Turn OFF</option>
+            </select>
+          </div>
+          <div class="col-md-12 mt-3">
+            <button class="btn btn-success w-100" type="submit">➕ Add Schedule</button>
+          </div>
         </form>
+      </div>
+
+      <div class="card p-3">
+        <h6 class="mb-3">🕓 Scheduled Tasks</h6>
+        <ul id="scheduleList" class="list-group"></ul>
+      </div>
     </div>
 
-    <div class="card p-3">
-        <h5>📋 Scheduled Tasks</h5>
-        <ul id="scheduleList" class="list-group mt-2"></ul>
+    <!-- OTA Section -->
+    <div class="col-md-6">
+      <div class="card p-4 mb-4">
+        <h5>🔄 OTA Firmware Update</h5>
+        <div class="form-group">
+          <label for="otaUrl">Firmware URL (.bin)</label>
+          <input type="text" id="otaUrl" class="form-control" placeholder="https://example.com/firmware.bin">
+        </div>
+        <button class="btn btn-primary w-100 mt-2" id="otaBtn">🚀 Trigger OTA Update</button>
+      </div>
     </div>
+  </div>
 </div>
 
-<footer class="text-center">
-    <p>All Rights Reserved &copy; Smart Irrigation System</p>
+<footer class="text-center mt-4">
+  <p>All Rights Reserved &copy; Smart Irrigation System</p>
 </footer>
 
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -67,12 +80,5 @@
 <script src="/static/js/scheduler.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
-<script>
-    document.getElementById("scheduleForm").addEventListener("submit", function (e) {
-        e.preventDefault();
-        addSchedule();
-    });
-</script>
-
 </body>
 </html>
