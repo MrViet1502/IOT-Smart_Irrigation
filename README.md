@@ -10,12 +10,14 @@ Hệ thống tự động tưới cây thông minh sẽ sử dụng cảm biến
 - **Tự động tưới cây khi độ ẩm đất xuống dưới ngưỡng tối thiểu.**
 - **Gửi thông báo hoặc cảnh báo khi có vấn đề (ví dụ: độ ẩm quá thấp, hệ thống bị lỗi).**
 - **Hiển thị dữ liệu trực quan qua ứng dụng di động hoặc web.**
+- **Quét thẻ RFID để tưới cây trực tiếp, khi không cần qua serve.**
 
 ## Phần cứng sử dụng
 - **ESP32**
 - **Cảm biến độ ẩm đất**
 - **Cảm biến DHT20** (đo nhiệt độ và độ ẩm)
 - **Máy bơm nước mini**
+- **RFID**
 
 ## Công nghệ sử dụng
 
