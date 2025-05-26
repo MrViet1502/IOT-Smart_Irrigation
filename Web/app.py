@@ -22,7 +22,7 @@ csrf = CSRFProtect(app)
 # ----------- Cấu hình IoT ThingsBoard -------------
 THINGSBOARD_URL = "https://app.coreiot.io"
 DEVICE_ID = "1f5f2270-f990-11ef-a887-6d1a184f2bb5"
-JWT_TOKEN = "eyJhbG....iyA"
+JWT_TOKEN = "..Jlim4T--"
 HEADERS = {"X-Authorization": f"Bearer {JWT_TOKEN}"}
 
 # ----------- Cấu hình lưu dữ liệu -------------
