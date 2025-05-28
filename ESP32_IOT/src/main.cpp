@@ -3,6 +3,8 @@
 #include "mqttModule.h"
 #include "sensorsModule.h"
 #include "otaModule.h"
+#include "rfidModule.h"
+#include <SPI.h>
 #include <Wire.h>
 
 TaskHandle_t WiFiTaskHandle = NULL;
@@ -10,12 +12,14 @@ TaskHandle_t MQTTaskHandle = NULL;
 TaskHandle_t TelemetryTaskHandle = NULL;
 TaskHandle_t MQ2TaskHandle = NULL;
 TaskHandle_t OTAUpdateTaskHandle = NULL;
+TaskHandle_t RFIDTaskHandle = NULL;
 
 void setup()
 {
   Serial.begin(115200);
   delay(1000);
   Wire.begin();
+  SPI.begin();
   i2cMutex = xSemaphoreCreateMutex();
   pinMode(MQ2_AO_PIN, INPUT);
   WiFi.begin(ssid, password);
@@ -25,11 +29,12 @@ void setup()
   client.setCallback(callback);
 
   // Tạo task
-  xTaskCreate(checkWifiTask, "WiFiTask", 4096, NULL, 1, &WiFiTaskHandle);
-  xTaskCreate(MQTTask, "MQTTask", 4096, NULL, 1, &MQTTaskHandle);
+  xTaskCreate(checkWifiTask, "WiFiTask", 4096, NULL, 2, &WiFiTaskHandle);
+  xTaskCreate(MQTTask, "MQTTask", 4096, NULL, 2, &MQTTaskHandle);
   xTaskCreate(sendTelemetry, "TelemetryTask", 4096, NULL, 1, &TelemetryTaskHandle);
   xTaskCreate(sendMQ2Data, "MQ2Task", 4096, NULL, 1, &MQ2TaskHandle);
   xTaskCreate(RunOTA_Update, "OTA_Update", 8192, NULL, 1, &OTAUpdateTaskHandle);
+  xTaskCreate(readRFID, "RFIDTask", 4096, NULL, 1, &RFIDTaskHandle);
 }
 
 void loop() {}
