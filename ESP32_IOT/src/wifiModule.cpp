@@ -1,52 +1,55 @@
-#include "../include/wifiModule.h"
-#include <ThingsBoard.h>
-#include "../include/schedulerEvent.h"
-#include "../include/ledControl.h"
-bool initWifi()
+#include "globalConfig.h"
+
+const char *ssid = "viet";
+const char *password = "20252025";
+WiFiClient espClient;
+
+PubSubClient client(espClient);
+
+void checkWifiTask(void *pvParameters)
 {
-  Serial.print("Connecting to Wifi: ");
-  Serial.println(WIFI_SSID);
-
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-
-  unsigned long startTime = millis();
-  while (WiFi.status() != WL_CONNECTED && (millis() - startTime < 20000))
-  {
-    Serial.print(".");
-    vTaskDelay(pdMS_TO_TICKS(500)); // FreeRTOS delay
-  }
-
-  if (WiFi.status() == WL_CONNECTED)
-  {
-    Serial.println("\nConnected to Wifi. IP: " + WiFi.localIP().toString());
-    return true;
-  }
-  else
-  {
-    Serial.println("\nWiFi connect timeout!");
-    return false;
-  }
-}
-
-void taskCheckWifiConnection(void *ptrParameter)
-{
-  Serial.println("Connecting to Wifi ...");
-  initWifi(); // Gọi đúng
-  while (true)
-  {
-    if (OTAOnProgress == true)
+    for (;;)
     {
-      Serial.println("OTA in progress, skip wifi check");
-      vTaskDelay(pdMS_TO_TICKS(10000));
-      continue;
-    }
+        if (otaInProgress) // Nếu đang cập nhật OTA thì không kiểm tra WiFi
+        {
+            Serial.println("OTA rebooting ...");
+            vTaskDelay(10000 / portTICK_PERIOD_MS);
+            continue;
+        }
 
-    if (WiFi.status() != WL_CONNECTED)
-    {
-      Serial.println("WiFi disconnected. Reconnecting...");
-      initWifi();
-    }
+        if (WiFi.status() != WL_CONNECTED)
+        {
+            Serial.println("WiFi disconnected! Reconnecting...");
+            WiFi.begin(ssid, password);
+            unsigned long start = millis();
+            while (WiFi.status() != WL_CONNECTED && millis() - start < 10000)
+            {
+                vTaskDelay(500 / portTICK_PERIOD_MS);
+                Serial.print(".");
+            }
 
-    vTaskDelay(pdMS_TO_TICKS(10000));
-  }
+            if (WiFi.status() == WL_CONNECTED)
+            {
+                Serial.print("\nWiFi connected: ");
+                Serial.println(WiFi.localIP());
+            }
+            else
+            {
+                Serial.println("\nWiFi reconnect failed.");
+            }
+        }
+        else
+        {
+            // Để tránh log spam: có thể chỉ in khi lần đầu kết nối thành công
+            static bool loggedOK = false;
+            if (!loggedOK)
+            {
+                Serial.print("WiFi OK, IP: ");
+                Serial.println(WiFi.localIP());
+                loggedOK = true;
+            }
+        }
+
+        vTaskDelay(10000 / portTICK_PERIOD_MS);
+    }
 }

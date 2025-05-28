@@ -1,13 +1,6 @@
-#ifndef __WIFI_MODULE_H__
-#define __WIFI_MODULE_H__
+#ifndef WIFI_MODULE_H
+#define WIFI_MODULE_H
 
-#include <Arduino.h>
-#include <WiFi.h>
+void checkWifiTask(void *pvParameters);
 
-#define WIFI_SSID "viet"
-#define WIFI_PASSWORD "20252025"
-
-void initWifi(void *ptrParameter);
-void taskCheckWifiConnection(void *ptrParameter);
-
-#endif
+#endif // WIFI_MODULE_H

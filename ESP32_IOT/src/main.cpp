@@ -1,32 +1,35 @@
-#include "../include/ledControl.h"
-#include "../include/wifiModule.h"
-#include "../include/readDHT20.h"
-#include "../include/schedulerEvent.h"
-////#include "../include/readNFC.h"
+#include "globalConfig.h"
+#include "wifiModule.h"
+#include "mqttModule.h"
+#include "sensorsModule.h"
+#include "otaModule.h"
+#include <Wire.h>
 
-// void setup()
-// {
-//   Serial.begin(115200);
-//   pinMode(GPIO_LED, OUTPUT);
-//   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-//   xTaskCreate(taskCheckWifiConnection, "wifiConnection", 4096, NULL, 1, NULL);
-//   xTaskCreate(taskReadSensor, "readSensor", 16384, NULL, 2, NULL);
-//   xTaskCreate(taskSchedulerEvent, "schedulerEvent", 4096, NULL, 3, NULL);
-//   xTaskCreate(taskSubscribeRPC, "subscribeRPC", 4096, NULL, 4, NULL);
-//   xTaskCreate(taskOTAFirmwareUpdate, "otaFirmwareUpdate", 16384, NULL, 5, NULL);
-//   // xTaskCreate(taskReadNFC, "ScanNFC", 2048, NULL, 6, NULL);
-// }
-
-// void loop()
-// {
-// }
+TaskHandle_t WiFiTaskHandle = NULL;
+TaskHandle_t MQTTaskHandle = NULL;
+TaskHandle_t TelemetryTaskHandle = NULL;
+TaskHandle_t MQ2TaskHandle = NULL;
+TaskHandle_t OTAUpdateTaskHandle = NULL;
 
 void setup()
 {
   Serial.begin(115200);
-  pinMode(GPIO_LED, OUTPUT);
-  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
-  xTaskCreate(taskCheckWifiConnection, "wifiConnection", 4096, NULL, 1, NULL);
+  delay(1000);
+  Wire.begin();
+  i2cMutex = xSemaphoreCreateMutex();
+  pinMode(MQ2_AO_PIN, INPUT);
+  WiFi.begin(ssid, password);
+  client.setServer(mqttServer, mqttPort);
+  pinMode(LED_PIN, OUTPUT);
+  digitalWrite(LED_PIN, LOW);
+  client.setCallback(callback);
+
+  // Tạo task
+  xTaskCreate(checkWifiTask, "WiFiTask", 4096, NULL, 1, &WiFiTaskHandle);
+  xTaskCreate(MQTTask, "MQTTask", 4096, NULL, 1, &MQTTaskHandle);
+  xTaskCreate(sendTelemetry, "TelemetryTask", 4096, NULL, 1, &TelemetryTaskHandle);
+  xTaskCreate(sendMQ2Data, "MQ2Task", 4096, NULL, 1, &MQ2TaskHandle);
+  xTaskCreate(RunOTA_Update, "OTA_Update", 8192, NULL, 1, &OTAUpdateTaskHandle);
 }
 
 void loop() {}
