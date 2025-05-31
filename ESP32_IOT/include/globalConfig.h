@@ -4,6 +4,10 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 
+// threshold of humidity and temperature
+extern float thresholdHumidity;
+extern float thresholdTemperature;
+
 // WiFi credentials
 extern const char *ssid;
 extern const char *password;
@@ -30,6 +34,7 @@ extern SemaphoreHandle_t i2cMutex;
 #define OTA_Key "fw_url"
 #define LED_STATE_ATTR "led"
 #define MQ2_AO_PIN 34
+#define BUZZER_PIN 20
 
 // Telemetry intervals (ms)
 extern const long telemetryInterval;

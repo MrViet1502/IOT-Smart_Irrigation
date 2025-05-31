@@ -25,7 +25,9 @@ void setup()
   WiFi.begin(ssid, password);
   client.setServer(mqttServer, mqttPort);
   pinMode(LED_PIN, OUTPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
   digitalWrite(LED_PIN, LOW);
+  digitalWrite(BUZZER_PIN, LOW);
   client.setCallback(callback);
 
   // Tạo task

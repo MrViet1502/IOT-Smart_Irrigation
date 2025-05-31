@@ -1,6 +1,7 @@
 #include "globalConfig.h"
 #include "DHT20.h"
 #include <ArduinoJson.h>
+#include "../include/sensorsModule.h"
 
 DHT20 dht20;
 SemaphoreHandle_t i2cMutex = NULL;
@@ -8,9 +9,19 @@ SemaphoreHandle_t i2cMutex = NULL;
 const long telemetryInterval = 5000;
 const long mq2Interval = 5000;
 
+float thresholdHumidity = 0;
+float thresholdTemperature = 0;
+
+void exceptionHandler(void)
+{
+    digitalWrite(BUZZER_PIN, HIGH);
+    Serial.println("The informations collected are not eligible to transmit to cloud!");
+}
+
 void sendTelemetry(void *pvParameters)
 {
     dht20.begin();
+    digitalWrite(BUZZER_PIN, LOW);
 
     for (;;)
     {
@@ -30,13 +41,24 @@ void sendTelemetry(void *pvParameters)
                     float temp = dht20.getTemperature();
                     float hum = dht20.getHumidity();
 
-                    StaticJsonDocument<128> doc;
-                    doc["temperature"] = temp;
-                    doc["humidity"] = hum;
-                    char buffer[128];
-                    serializeJson(doc, buffer);
-                    client.publish("v1/devices/me/telemetry", buffer);
-                    Serial.println(" Sent DHT20: " + String(buffer));
+                    if (isnan(temp) || isnan(hum))
+                        exceptionHandler();
+                    else
+                    {
+                        if (temp < thresholdTemperature or hum < thresholdHumidity)
+                            exceptionHandler();
+                        else
+                        {
+                            StaticJsonDocument<128> doc;
+                            doc["temperature"] = temp;
+                            doc["humidity"] = hum;
+                            char buffer[128];
+                            serializeJson(doc, buffer);
+                            digitalWrite(BUZZER_PIN, LOW);
+                            client.publish("v1/devices/me/telemetry", buffer);
+                            Serial.println(" Sent DHT20: " + String(buffer));
+                        }
+                    }
                 }
                 else
                 {
