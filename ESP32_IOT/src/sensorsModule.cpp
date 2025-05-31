@@ -9,9 +9,6 @@ SemaphoreHandle_t i2cMutex = NULL;
 const long telemetryInterval = 5000;
 const long mq2Interval = 5000;
 
-float thresholdHumidity = 0;
-float thresholdTemperature = 0;
-
 void exceptionHandler(void)
 {
     digitalWrite(BUZZER_PIN, HIGH);

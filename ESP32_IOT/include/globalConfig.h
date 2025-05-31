@@ -33,6 +33,8 @@ extern SemaphoreHandle_t i2cMutex;
 #define LED_PIN 12
 #define OTA_Key "fw_url"
 #define LED_STATE_ATTR "led"
+#define THRESHOLD_HUMIDITY "thresholdHumidity"
+#define THRESHOLD_TEMPERATURE "thresholdTemperature"
 #define MQ2_AO_PIN 34
 #define BUZZER_PIN 20
 

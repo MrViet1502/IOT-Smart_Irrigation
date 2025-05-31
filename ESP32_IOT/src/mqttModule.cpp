@@ -4,6 +4,8 @@
 const char *mqttServer = "app.coreiot.io";
 const int mqttPort = 1883;
 const char *ACCESS_TOKEN = "gB69jhkhOWD1wEYj6mm7";
+float thresholdHumidity = 0;
+float thresholdTemperature = 0;
 
 // MQTT callback
 void callback(char *topic, byte *payload, unsigned int length)
@@ -39,6 +41,16 @@ void callback(char *topic, byte *payload, unsigned int length)
             firmwareURL = doc["fw_url"].as<String>();
             otaTriggered = true;
             Serial.println("Received OTA URL: " + firmwareURL);
+        }
+        if (doc.containsKey(THRESHOLD_HUMIDITY))
+        {
+            thresholdHumidity  = doc[THRESHOLD_HUMIDITY].as<float>();
+            Serial.println("The threshold value of humidity is updated by Server");
+        }
+        if (doc.containsKey(THRESHOLD_TEMPERATURE))
+        {
+            thresholdTemperature = doc[THRESHOLD_TEMPERATURE].as<float>();
+            Serial.println("The threshold value of temperature is updated by Server");
         }
     }
 
