@@ -15,14 +15,14 @@
 
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 
-// Ví dụ 1 UID hợp lệ (4 byte)
-const byte authorizedUID[4] = {0x7C, 0x1A, 0x11, 0x05};
+// 1 UID hợp lệ (4 byte)
+const byte authorizedUID[4] = {0x7C, 0x1A, 0x11, 0x05}; // đăng kí thẻ trước đó
 
 void readRFID(void *pvParameters)
 {
 
     mfrc522.PCD_Init();
-    Serial.println("[RFID] Ready to scan...");
+    Serial.println("Ready to scan...");
 
     for (;;)
     {
