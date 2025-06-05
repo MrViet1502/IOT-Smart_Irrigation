@@ -22,7 +22,7 @@ csrf = CSRFProtect(app)
 # ----------- Cấu hình IoT ThingsBoard -------------
 THINGSBOARD_URL = "https://app.coreiot.io"
 DEVICE_ID = "1f5f2270-f990-11ef-a887-6d1a184f2bb5"
-JWT_TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJuLnF1b2N2aWV0MTUwMkBnbWFpbC5jb20iLCJ1c2VySWQiOiI5NDMyNTg5MC1lZTcwLTExZWYtODdiNS0yMWJjY2Y3ZDI5ZDUiLCJzY29wZXMiOlsiVEVOQU5UX0FETUlOIl0sInNlc3Npb25JZCI6IjFhZWQ0MzE5LTc1MDgtNDM4My04N2Q5LWUyNjFlZWM1ZTZlMiIsImV4cCI6MTc0OTEzNzUzMiwiaXNzIjoiY29yZWlvdC5pbyIsImlhdCI6MTc0OTEyODUzMiwiZmlyc3ROYW1lIjoiVmnhu4d0IiwibGFzdE5hbWUiOiJOZ3V54buFbiBRdeG7kWMiLCJlbmFibGVkIjp0cnVlLCJpc1B1YmxpYyI6ZmFsc2UsInRlbmFudElkIjoiOTQyYTkwNjAtZWU3MC0xMWVmLTg3YjUtMjFiY2NmN2QyOWQ1IiwiY3VzdG9tZXJJZCI6IjEzODE0MDAwLTFkZDItMTFiMi04MDgwLTgwODA4MDgwODA4MCJ9.qvvIrOkN0qIBKjeAFftPoSA52M2QUVkCV0vYC2pRhu-722OZmqGkoCGlje78Ds_D45DI_KoRT-ld4uyqGl3Fug"
+JWT_TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJuLnF1b2N2aWV0MTUwMkBnbWFpbC5jb20iLCJ1c2VySWQiOiI5NDMyNTg5MC1lZTcwLTExZWYtODdiNS0yMWJjY2Y3ZDI5ZDUiLCJzY29wZXMiOlsiVEVOQU5UX0FETUlOIl0sInNlc3Npb25JZCI6IjBlODJjNjc4LWY5MzktNDM1Ny05NmI4LTllYmU2ZDMwOWE0NyIsImV4cCI6MTc0OTE0NzQ1NSwiaXNzIjoiY29yZWlvdC5pbyIsImlhdCI6MTc0OTEzODQ1NSwiZmlyc3ROYW1lIjoiVmnhu4d0IiwibGFzdE5hbWUiOiJOZ3V54buFbiBRdeG7kWMiLCJlbmFibGVkIjp0cnVlLCJpc1B1YmxpYyI6ZmFsc2UsInRlbmFudElkIjoiOTQyYTkwNjAtZWU3MC0xMWVmLTg3YjUtMjFiY2NmN2QyOWQ1IiwiY3VzdG9tZXJJZCI6IjEzODE0MDAwLTFkZDItMTFiMi04MDgwLTgwODA4MDgwODA4MCJ9.kxpZjKia9eDiT95Siid7QjtQRRymHu0WG7LUPhYjFz1lcPCLa8n-DeR5pQRy7h5iBhjuXE51QppFcjf_7hyOog"
 HEADERS = {"X-Authorization": f"Bearer {JWT_TOKEN}"}
 
 # ----------- Cấu hình lưu dữ liệu -------------
@@ -203,7 +203,7 @@ def load_csv_to_json(file_path):
     return jsonify(result)
 
 # ----------------------------------------
-# API điều khiển pump
+# API điều khiển thiết bị
 @app.route("/api/control", methods=["POST"])
 @csrf.exempt
 def control_device():
@@ -221,28 +221,47 @@ def control_device():
         except requests.exceptions.RequestException as e:
             return jsonify({"error": f"OTA request failed: {str(e)}"}), 500
 
+    # Trường hợp gửi RFID key
+    elif "rfid_key" in payload:
+        rfid_key = payload["rfid_key"]
+        url = f"{THINGSBOARD_URL}/api/plugins/telemetry/DEVICE/{DEVICE_ID}/attributes/SHARED_SCOPE"
+        body = {"rfid_key": rfid_key}
+        try:
+            response = requests.post(url, headers=HEADERS, json=body, timeout=5)
+            response.raise_for_status()
+            return jsonify({"status": "success", "type": "rfid", "rfid_key": rfid_key})
+        except requests.exceptions.RequestException as e:
+            return jsonify({"error": f"RFID request failed: {str(e)}"}), 500
+
     # Trường hợp gửi lệnh bật/tắt pump
-    command = payload.get("command")
-    if command not in ["on", "off"]:
-        return jsonify({"error": "Invalid command"}), 400
+    elif "command" in payload:
+        command = payload["command"]
+        if command not in ["on", "off"]:
+            return jsonify({"error": "Invalid command"}), 400
 
-    pump_state = command == "on"
-    url = f"{THINGSBOARD_URL}/api/plugins/telemetry/DEVICE/{DEVICE_ID}/attributes/SHARED_SCOPE"
-    body = {"pump": pump_state}
+        pump_state = command == "on"
+        url = f"{THINGSBOARD_URL}/api/plugins/telemetry/DEVICE/{DEVICE_ID}/attributes/SHARED_SCOPE"
+        body = {"pump": pump_state}
+        try:
+            response = requests.post(url, headers=HEADERS, json=body, timeout=5)
+            response.raise_for_status()
+            return jsonify({"status": "success", "pump": pump_state})
+        except requests.exceptions.RequestException as e:
+            return jsonify({"error": f"Pump request failed: {str(e)}"}), 500
 
-    try:
-        response = requests.post(url, headers=HEADERS, json=body, timeout=5)
-        response.raise_for_status()
-        return jsonify({"status": "success", "pump": pump_state})
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": f"pump request faipump: {str(e)}"}), 500
+    # Nếu không khớp với bất kỳ key nào
+    else:
+        return jsonify({"error": "Invalid payload structure"}), 400
+
+   
 
 # ----------------------------------------
 # BACKGROUND COLLECTOR: lấy dữ liệu mỗi 10 giây ghi CSV
 def collector_loop():
     while True:
         try:
-            res = requests.get("http://localhost:5000/api/data")
+            res = requests.get("http://localhost:5000/api/data", timeout=5)
+            res.raise_for_status()
             if res.status_code == 200:
                 data = res.json()
 
@@ -331,5 +350,6 @@ if __name__ == "__main__":
     schedule_thread = threading.Thread(target=run_schedupump_tasks, daemon=True)
     collector_thread.start()
     schedule_thread.start()
-    app.run(debug=True)
+    app.run(debug=False, host="0.0.0.0", port=5000)
+
 

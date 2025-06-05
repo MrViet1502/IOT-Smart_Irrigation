@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Scheduler & OTA</title>
+  <title>Automation</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="{{ csrf_token_value }}">
 
@@ -26,11 +26,11 @@
 </div>
 
 <div class="content">
-  <h2 class="text-center my-4">⚙️ PUMP Scheduler & OTA Update</h2>
+  <h2 class="text-center my-4">⚙️ PUMP Scheduler, OTA & RFID Management</h2>
 
   <div class="row">
-    <!-- Scheduler Section -->
-    <div class="col-md-6">
+    <!-- Left Column: Scheduler Section -->
+    <div class="col-lg-7">
       <div class="card p-4 mb-4">
         <h5>📅 Schedule PUMP</h5>
         <form id="scheduleForm" class="row g-3">
@@ -57,8 +57,8 @@
       </div>
     </div>
 
-    <!-- OTA Section -->
-    <div class="col-md-6">
+    <!-- Right Column: OTA & RFID Section -->
+    <div class="col-lg-5">
       <div class="card p-4 mb-4">
         <h5>🔄 OTA Firmware Update</h5>
         <div class="form-group">
@@ -66,6 +66,15 @@
           <input type="text" id="otaUrl" class="form-control" placeholder="https://example.com/firmware.bin">
         </div>
         <button class="btn btn-primary w-100 mt-2" id="otaBtn">🚀 Trigger OTA Update</button>
+      </div>
+
+      <div class="card p-4 mb-4">
+        <h5>🆔 Register RFID Card</h5>
+        <div class="form-group">
+          <label for="rfidInput">RFID Key (comma-separated hex)</label>
+          <input type="text" id="rfidInput" class="form-control" placeholder="0xXX, 0xXX, 0xXX, 0xXX">
+        </div>
+        <button class="btn btn-dark w-100 mt-2" id="rfidBtn">➕ Register RFID</button>
       </div>
     </div>
   </div>
@@ -82,3 +91,4 @@
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
 </body>
 </html>
+

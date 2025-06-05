@@ -110,6 +110,36 @@ function triggerOTA() {
     });
 }
 
+function registerRFID() {
+  const rfidInput = document.getElementById("rfidInput").value.trim();
+  if (!rfidInput.match(/^0x[0-9A-Fa-f]{2}(,\s*0x[0-9A-Fa-f]{2}){3}$/)) {
+    toastr.error("❌ Invalid RFID format! (e.g. 0xXX, 0xXX, 0xXX, 0xXX)");
+    return;
+  }
+
+  fetch("/api/control", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRF-Token": csrfToken
+    },
+    body: JSON.stringify({ rfid_key: rfidInput })
+  })
+    .then(res => res.json())
+    .then(result => {
+      if (result.status === "success") {
+        toastr.success("✅ RFID key registered!");
+      } else {
+        toastr.error("❌ Failed to register RFID");
+      }
+    })
+    .catch(err => {
+      console.error("Error registering RFID:", err);
+      toastr.error("❌ RFID request error");
+    });
+}
+
+
 window.onload = () => {
   checkSession();
   loadSchedules();
@@ -120,4 +150,6 @@ window.onload = () => {
   });
 
   document.getElementById("otaBtn").addEventListener("click", triggerOTA);
+
+  document.getElementById("rfidBtn").addEventListener("click", registerRFID);
 };
