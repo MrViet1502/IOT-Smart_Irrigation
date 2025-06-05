@@ -16,11 +16,24 @@
 MFRC522 mfrc522(SS_PIN, RST_PIN);
 
 // 1 UID hợp lệ (4 byte)
-const byte authorizedUID[4] = {0x7C, 0x1A, 0x11, 0x05}; // đăng kí thẻ trước đó
+// const byte authorizedUID[4] = {0x7C, 0x1A, 0x11, 0x05}; // đăng kí thẻ trước đó
+
+byte authorizedUID[4] = {0, 0, 0, 0};
+bool rfidUIDValid = false;
+
+void buzzerBeep(int count)
+{
+    for (int i = 0; i < count; i++)
+    {
+        digitalWrite(BUZZER_PIN, HIGH);
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+        digitalWrite(BUZZER_PIN, LOW);
+        vTaskDelay(100 / portTICK_PERIOD_MS);
+    }
+}
 
 void readRFID(void *pvParameters)
 {
-
     mfrc522.PCD_Init();
     Serial.println("Ready to scan...");
 
@@ -41,7 +54,7 @@ void readRFID(void *pvParameters)
         }
         Serial.println();
 
-        // So sánh với UID hợp lệ
+        // So sánh UID quẹt được với UID hợp lệ
         bool isAuthorized = true;
         for (byte i = 0; i < 4; i++)
         {
@@ -52,21 +65,34 @@ void readRFID(void *pvParameters)
             }
         }
 
-        if (isAuthorized)
+        if (isAuthorized && rfidUIDValid)
         {
-            Serial.println(" Authorized card! PUMP ON");
-            digitalWrite(PUMP_PIN, HIGH);
+            // Đúng thẻ được đăng ký
+            if (digitalRead(PUMP_PIN) == LOW)
+            {
+                // Bơm đang tắt => bật bơm
+                digitalWrite(PUMP_PIN, HIGH);
+                Serial.println("Authorized card! PUMP ON");
+            }
+            else
+            {
+                // Bơm đang bật => tắt bơm
+                digitalWrite(PUMP_PIN, LOW);
+                Serial.println("Authorized card! PUMP OFF");
+            }
+            buzzerBeep(1); // 1 tiếng beep
         }
         else
         {
-            Serial.println(" Unauthorized card! PUMP OFF");
-            digitalWrite(PUMP_PIN, LOW);
+            // Sai thẻ
+            Serial.println("Unauthorized card! Access denied.");
+            buzzerBeep(3); // 3 tiếng beep
         }
 
         // Kết thúc giao tiếp với thẻ
         mfrc522.PICC_HaltA();
 
-        // Tạm dừng để tránh lặp
+        // Tránh đọc liên tục
         vTaskDelay(1000 / portTICK_PERIOD_MS);
     }
 }

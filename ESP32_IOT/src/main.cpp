@@ -26,6 +26,8 @@ void setup()
     client.setServer(mqttServer, mqttPort);
     pinMode(PUMP_PIN, OUTPUT);
     digitalWrite(PUMP_PIN, LOW);
+    pinMode(BUZZER_PIN, OUTPUT);
+    digitalWrite(BUZZER_PIN, LOW);
     client.setCallback(callback);
 
     // Tạo task

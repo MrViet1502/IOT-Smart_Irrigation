@@ -35,6 +35,10 @@ extern SemaphoreHandle_t i2cMutex;
 extern const long telemetryInterval;
 extern const long soilInterval;
 
+// RFID module
+#define BUZZER_PIN 25
+extern byte authorizedUID[4]; // UID được cập nhật từ server
+extern bool rfidUIDValid;     // Cờ xác nhận đã nhận UID hợp lệ
 // Các task handle
 extern TaskHandle_t WiFiTaskHandle;
 extern TaskHandle_t MQTTaskHandle;

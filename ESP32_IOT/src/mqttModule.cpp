@@ -40,6 +40,52 @@ void callback(char *topic, byte *payload, unsigned int length)
             otaTriggered = true;
             Serial.println("Received OTA URL: " + firmwareURL);
         }
+        if (doc.containsKey("rfid_key"))
+        {
+            String rfidStr = doc["rfid_key"]; // e.g. "0x7C,0x1A,0x11,0x05"
+            Serial.println("[RFID] Received RFID UID string: " + rfidStr);
+
+            // Parse chuỗi thành mảng byte
+            int index = 0;
+            int lastPos = 0;
+
+            for (int i = 0; i < rfidStr.length() && index < 4; i++)
+            {
+                if (rfidStr[i] == ',' || i == rfidStr.length() - 1)
+                {
+                    String hexVal = rfidStr.substring(lastPos, i + (i == rfidStr.length() - 1 ? 1 : 0));
+                    hexVal.trim();
+
+                    if (hexVal.startsWith("0x") || hexVal.startsWith("0X"))
+                    {
+                        hexVal = hexVal.substring(2);
+                    }
+
+                    authorizedUID[index] = (byte)strtol(hexVal.c_str(), NULL, 16);
+                    index++;
+                    lastPos = i + 1;
+                }
+            }
+
+            if (index == 4 && rfidStr.indexOf(",") != -1)
+            {
+                rfidUIDValid = true;
+                Serial.print("[RFID] Updated authorized UID: ");
+                for (int i = 0; i < 4; i++)
+                {
+                    Serial.print("0x");
+                    Serial.print(authorizedUID[i], HEX);
+                    if (i < 3)
+                        Serial.print(", ");
+                }
+                Serial.println();
+            }
+            else
+            {
+                Serial.println("[RFID] Error: Invalid UID format");
+                rfidUIDValid = false;
+            }
+        }
     }
 
     // Xử lý RPC
