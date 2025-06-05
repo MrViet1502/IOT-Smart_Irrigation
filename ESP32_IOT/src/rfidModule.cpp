@@ -54,13 +54,13 @@ void readRFID(void *pvParameters)
 
         if (isAuthorized)
         {
-            Serial.println(" Authorized card! LED ON");
-            digitalWrite(LED_PIN, HIGH);
+            Serial.println(" Authorized card! PUMP ON");
+            digitalWrite(PUMP_PIN, HIGH);
         }
         else
         {
-            Serial.println(" Unauthorized card! LED OFF");
-            digitalWrite(LED_PIN, LOW);
+            Serial.println(" Unauthorized card! PUMP OFF");
+            digitalWrite(PUMP_PIN, LOW);
         }
 
         // Kết thúc giao tiếp với thẻ

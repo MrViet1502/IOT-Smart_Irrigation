@@ -55,7 +55,7 @@ void sendTelemetry(void *pvParameters)
     }
 }
 
-void sendMQ2Data(void *pvParameters)
+void sendSoilData(void *pvParameters)
 {
     for (;;)
     {
@@ -67,14 +67,14 @@ void sendMQ2Data(void *pvParameters)
 
         if (WiFi.status() == WL_CONNECTED && client.connected())
         {
-            int mq2Value = analogRead(MQ2_AO_PIN);
+            int soilValue = analogRead(Soil_AO_PIN);
 
             StaticJsonDocument<128> doc;
-            doc["gas"] = mq2Value;
+            doc["soil"] = soilValue;
             char buffer[128];
             serializeJson(doc, buffer);
             client.publish("v1/devices/me/telemetry", buffer);
-            Serial.println(" Sent MQ2: " + String(buffer));
+            Serial.println(" Sent soil: " + String(buffer));
         }
 
         vTaskDelay(mq2Interval / portTICK_PERIOD_MS);

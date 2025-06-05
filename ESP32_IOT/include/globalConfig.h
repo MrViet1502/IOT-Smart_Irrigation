@@ -26,20 +26,20 @@ extern volatile bool otaInProgress;
 extern SemaphoreHandle_t i2cMutex;
 
 // Shared pin definitions
-#define LED_PIN 12
+#define PUMP_PIN 12
 #define OTA_Key "fw_url"
-#define LED_STATE_ATTR "led"
-#define MQ2_AO_PIN 34
+#define PUMP_STATE_ATTR "pump"
+#define Soil_AO_PIN 34
 
 // Telemetry intervals (ms)
 extern const long telemetryInterval;
-extern const long mq2Interval;
+extern const long soilInterval;
 
 // Các task handle
 extern TaskHandle_t WiFiTaskHandle;
 extern TaskHandle_t MQTTaskHandle;
 extern TaskHandle_t TelemetryTaskHandle;
-extern TaskHandle_t MQ2TaskHandle;
+extern TaskHandle_t SoilTaskHandle;
 extern TaskHandle_t OTAUpdateTaskHandle;
 
 #endif // GLOBAL_CONFIG_H

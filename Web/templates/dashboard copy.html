@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>WQMS Dashboard</title>
+    <title>IOT Dashboard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <!-- Bootstrap -->
@@ -256,11 +256,11 @@
         </div>
     </div>
 
-    <h2 class="my-4 text-center">🕹️ Control LED</h2>
-    <div class="text-center led-control">
-        <button class="btn btn-success" onclick="sendCommand('on')">Bật LED</button>
-        <button class="btn btn-danger" onclick="sendCommand('off')">Tắt LED</button>
-        <p id="led_status"></p>
+    <h2 class="my-4 text-center">🕹️ Control PUMP</h2>
+    <div class="text-center pump-control">
+        <button class="btn btn-success" onclick="sendCommand('on')">Bật PUMP</button>
+        <button class="btn btn-danger" onclick="sendCommand('off')">Tắt PUMP</button>
+        <p id="pump_status"></p>
     </div>
 </div>
 
@@ -293,10 +293,10 @@ function sendCommand(command) {
         contentType: "application/json",
         data: JSON.stringify({ command }),
         success: function(response) {
-            $("#led_status").text("✅ Lệnh " + command + " đã gửi thành công");
+            $("#pump_status").text("✅ Lệnh " + command + " đã gửi thành công");
         },
         error: function(err) {
-            $("#led_status").text("❌ Lỗi gửi lệnh");
+            $("#pump_status").text("❌ Lỗi gửi lệnh");
         }
     });
 }

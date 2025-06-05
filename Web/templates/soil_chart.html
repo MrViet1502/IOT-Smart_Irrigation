@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Gas Chart</title>
+    <title>soil Chart</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
@@ -21,7 +21,7 @@
     <a href="/dashboard" class="sBarBtn">Dashboard</a>
     <a href="/tempChart" class="sBarBtn">Temperature</a>
     <a href="/humChart" class="sBarBtn">Humidity</a>
-    <a href="/gasChart" class="sBarBtn">Gas</a>
+    <a href="/soilChart" class="sBarBtn">Soil</a>
     <a href="/scheduler" class="sBarBtn">Automation</a>
     <a href="/logout" class="sBarBtn">Logout</a>
 </div>
@@ -31,15 +31,15 @@
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
-            <li class="breadcrumb-item active">Gas</li>
+            <li class="breadcrumb-item active">soil</li>
         </ol>
     </nav>
 
-    <h2 class="my-4 text-center">🌡️ Gas Chart</h2>
+    <h2 class="my-4 text-center">🌡️ soil Chart</h2>
 
     <div class="chart-card">
-        <canvas id="gasChart" height="120"></canvas>
-        <p class="text-muted mt-3 text-center">Realtime gas updates every 10 seconds</p>
+        <canvas id="soilChart" height="120"></canvas>
+        <p class="text-muted mt-3 text-center">Realtime soil updates every 10 seconds</p>
     </div>
 </div>
 
@@ -53,7 +53,7 @@
 <script src="/static/js/chart_config.js"></script>
 <script src="/static/js/chart_update.js"></script>
 <script>
-createChart(chartConfigs.gas);
+createChart(chartConfigs.soil);
 </script>
 
 </body>

@@ -29,15 +29,15 @@
 
 //     const temp = parseFloat(data.temperature.value);
 //     const humid = parseFloat(data.humidity.value);
-//     const gas = parseFloat(data.gas.value);
+//     const soil = parseFloat(data.soil.value);
 
 //     document.getElementById("temp").innerText = temp + " °C";
 //     document.getElementById("humid").innerText = humid + " %";
-//     document.getElementById("gas").innerText = gas;
+//     document.getElementById("soil").innerText = soil;
 
 //     document.getElementById("temp_time").innerText = data.temperature.timestamp;
 //     document.getElementById("humid_time").innerText = data.humidity.timestamp;
-//     document.getElementById("gas_time").innerText = data.gas.timestamp;
+//     document.getElementById("soil_time").innerText = data.soil.timestamp;
 
 //     if (thresholds.temperature && temp < thresholds.temperature) {
 //       toastr.warning(`🌡️ Temperature below threshold: ${temp}°C`);
@@ -45,8 +45,8 @@
 //     if (thresholds.humidity && humid < thresholds.humidity) {
 //       toastr.warning(`💧 Humidity below threshold: ${humid}%`);
 //     }
-//     if (thresholds.gas && gas < thresholds.gas) {
-//       toastr.warning(`🔥 Gas level below threshold: ${gas}`);
+//     if (thresholds.soil && soil < thresholds.soil) {
+//       toastr.warning(`🔥 soil level below threshold: ${soil}`);
 //     }
 //   }).catch(err => console.error("❌ Không thể tải dữ liệu:", err));
 //   document.getElementById("threshold-temp-label").innerText = "Ngưỡng: " + thresholds.temperature + " °C";
@@ -59,7 +59,7 @@
 //         .then(data => {
 //             thresholds.temperature = parseFloat(data.temperature) || null;
 //             thresholds.humidity = parseFloat(data.humidity) || null;
-//             thresholds.gas = parseFloat(data.gas) || null;
+//             thresholds.soil = parseFloat(data.soil) || null;
 //         });
 // }
 
@@ -76,7 +76,7 @@
 //     .then(res => res.json())
 //     .then(result => {
 //         if (result.status === "success") {
-//             toastr.success(`✅ Đã gửi lệnh thành công! Trạng thái LED: ${result.led ? "BẬT" : "TẮT"}`);
+//             toastr.success(`✅ Đã gửi lệnh thành công! Trạng thái pump: ${result.pump ? "BẬT" : "TẮT"}`);
 //         } else {
 //             toastr.error(`❌ Gửi lệnh thất bại: ${result.error}`);
 //         }
@@ -90,7 +90,7 @@
 // const thresholds = {
 //   temperature: null,
 //   humidity: null,
-//   gas: null
+//   soil: null
 // };
 // function openThresholdModal(type) {
 //   $('#thresholdType').val(type);
@@ -134,7 +134,7 @@ const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribut
 const thresholds = {
     temperature: null,
     humidity: null,
-    gas: null
+    soil: null
 };
 
 // Kiểm tra phiên đăng nhập
@@ -153,7 +153,7 @@ function fetchThresholds() {
         .then(data => {
             thresholds.temperature = parseFloat(data.temperature) || null;
             thresholds.humidity = parseFloat(data.humidity) || null;
-            thresholds.gas = parseFloat(data.gas) || null;
+            thresholds.soil = parseFloat(data.soil) || null;
 
             // ✅ Cập nhật hiển thị badge
             document.getElementById("threshold-temperature-label").innerText = thresholds.temperature !== null
@@ -164,8 +164,8 @@ function fetchThresholds() {
                 ? `Ngưỡng: ${thresholds.humidity} %`
                 : "Ngưỡng: chưa đặt";
 
-            document.getElementById("threshold-gas-label").innerText = thresholds.gas !== null
-                ? `Ngưỡng: ${thresholds.gas}`
+            document.getElementById("threshold-soil-label").innerText = thresholds.soil !== null
+                ? `Ngưỡng: ${thresholds.soil}`
                 : "Ngưỡng: chưa đặt";
         });
 }
@@ -182,24 +182,24 @@ function fetchData() {
 
         const temp = parseFloat(data.temperature.value);
         const humid = parseFloat(data.humidity.value);
-        const gas = parseFloat(data.gas.value);
+        const soil = parseFloat(data.soil.value);
 
         // Hiển thị giá trị
         document.getElementById("temp").innerText = `${temp} °C`;
         document.getElementById("humid").innerText = `${humid} %`;
-        document.getElementById("gas").innerText = gas;
+        document.getElementById("soil").innerText = soil;
 
         document.getElementById("temp_time").innerText = data.temperature.timestamp;
         document.getElementById("humid_time").innerText = data.humidity.timestamp;
-        document.getElementById("gas_time").innerText = data.gas.timestamp;
+        document.getElementById("soil_time").innerText = data.soil.timestamp;
 
         // Cảnh báo nếu dưới ngưỡng
         if (thresholds.temperature && temp < thresholds.temperature)
             toastr.warning(`🌡️ Nhiệt độ thấp hơn ngưỡng: ${temp}°C`);
         if (thresholds.humidity && humid < thresholds.humidity)
             toastr.warning(`💧 Độ ẩm thấp hơn ngưỡng: ${humid}%`);
-        if (thresholds.gas && gas < thresholds.gas)
-            toastr.warning(`🔥 Chỉ số khí Gas thấp hơn ngưỡng: ${gas}`);
+        if (thresholds.soil && soil < thresholds.soil)
+            toastr.warning(`🔥 Chỉ số khí soil thấp hơn ngưỡng: ${soil}`);
     })
     .catch(err => {
         console.error("❌ Lỗi khi lấy dữ liệu:", err);
@@ -207,7 +207,7 @@ function fetchData() {
     });
 }
 
-// Gửi lệnh điều khiển LED
+// Gửi lệnh điều khiển pump
 function sendCommand(command) {
     fetch("/api/control", {
         method: "POST",
@@ -220,7 +220,7 @@ function sendCommand(command) {
     .then(res => res.json())
     .then(result => {
         if (result.status === "success")
-            toastr.success(`✅ Đã gửi lệnh LED ${result.led ? "BẬT" : "TẮT"}`);
+            toastr.success(`✅ Đã gửi lệnh pump ${result.pump ? "BẬT" : "TẮT"}`);
         else
             toastr.error(`❌ Lỗi: ${result.error}`);
     })

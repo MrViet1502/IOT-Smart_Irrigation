@@ -22,13 +22,13 @@ csrf = CSRFProtect(app)
 # ----------- Cấu hình IoT ThingsBoard -------------
 THINGSBOARD_URL = "https://app.coreiot.io"
 DEVICE_ID = "1f5f2270-f990-11ef-a887-6d1a184f2bb5"
-JWT_TOKEN = "e----------A"
+JWT_TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJuLnF1b2N2aWV0MTUwMkBnbWFpbC5jb20iLCJ1c2VySWQiOiI5NDMyNTg5MC1lZTcwLTExZWYtODdiNS0yMWJjY2Y3ZDI5ZDUiLCJzY29wZXMiOlsiVEVOQU5UX0FETUlOIl0sInNlc3Npb25JZCI6IjFhZWQ0MzE5LTc1MDgtNDM4My04N2Q5LWUyNjFlZWM1ZTZlMiIsImV4cCI6MTc0OTEzNzUzMiwiaXNzIjoiY29yZWlvdC5pbyIsImlhdCI6MTc0OTEyODUzMiwiZmlyc3ROYW1lIjoiVmnhu4d0IiwibGFzdE5hbWUiOiJOZ3V54buFbiBRdeG7kWMiLCJlbmFibGVkIjp0cnVlLCJpc1B1YmxpYyI6ZmFsc2UsInRlbmFudElkIjoiOTQyYTkwNjAtZWU3MC0xMWVmLTg3YjUtMjFiY2NmN2QyOWQ1IiwiY3VzdG9tZXJJZCI6IjEzODE0MDAwLTFkZDItMTFiMi04MDgwLTgwODA4MDgwODA4MCJ9.qvvIrOkN0qIBKjeAFftPoSA52M2QUVkCV0vYC2pRhu-722OZmqGkoCGlje78Ds_D45DI_KoRT-ld4uyqGl3Fug"
 HEADERS = {"X-Authorization": f"Bearer {JWT_TOKEN}"}
 
 # ----------- Cấu hình lưu dữ liệu -------------
 CSV_TEMP = "temperature_data.csv"
 CSV_HUM = "humidity_data.csv"
-CSV_GAS = "gas_data.csv"
+CSV_soil = "soil_data.csv"
 MAX_ROWS = 40
 
 # Inject CSRF token cho form
@@ -95,7 +95,7 @@ def get_thresholds():
                 return jsonify(json.load(f))
     except:
         pass
-    return jsonify({"temperature": None, "humidity": None, "gas": None})
+    return jsonify({"temperature": None, "humidity": None, "soil": None})
 
 @app.route("/api/thresholds", methods=["POST"])
 @csrf.exempt
@@ -146,17 +146,17 @@ def hum_chart():
         return render_template("hum_chart.html")
     return redirect(url_for("login"))
 
-@app.route("/gasChart")
-def gas_chart():
+@app.route("/soilChart")
+def soil_chart():
     if 'user_id' in session:
-        return render_template("gas_chart.html")
+        return render_template("soil_chart.html")
     return redirect(url_for("login"))
 
 # ----------------------------------------
 # API realtime đọc data từ ThingsBoard
 @app.route("/api/data")
 def get_data():
-    keys = "humidity,temperature,gas"
+    keys = "humidity,temperature,soil"
     url = f"{THINGSBOARD_URL}/api/plugins/telemetry/DEVICE/{DEVICE_ID}/values/timeseries?keys={keys}"
 
     try:
@@ -186,9 +186,9 @@ def get_temp_history():
 def get_hum_history():
     return load_csv_to_json(CSV_HUM)
 
-@app.route("/api/gas_history")
-def get_gas_history():
-    return load_csv_to_json(CSV_GAS)
+@app.route("/api/soil_history")
+def get_soil_history():
+    return load_csv_to_json(CSV_soil)
 
 def load_csv_to_json(file_path):
     result = []
@@ -203,7 +203,7 @@ def load_csv_to_json(file_path):
     return jsonify(result)
 
 # ----------------------------------------
-# API điều khiển LED
+# API điều khiển pump
 @app.route("/api/control", methods=["POST"])
 @csrf.exempt
 def control_device():
@@ -221,21 +221,21 @@ def control_device():
         except requests.exceptions.RequestException as e:
             return jsonify({"error": f"OTA request failed: {str(e)}"}), 500
 
-    # Trường hợp gửi lệnh bật/tắt LED
+    # Trường hợp gửi lệnh bật/tắt pump
     command = payload.get("command")
     if command not in ["on", "off"]:
         return jsonify({"error": "Invalid command"}), 400
 
-    led_state = command == "on"
+    pump_state = command == "on"
     url = f"{THINGSBOARD_URL}/api/plugins/telemetry/DEVICE/{DEVICE_ID}/attributes/SHARED_SCOPE"
-    body = {"led": led_state}
+    body = {"pump": pump_state}
 
     try:
         response = requests.post(url, headers=HEADERS, json=body, timeout=5)
         response.raise_for_status()
-        return jsonify({"status": "success", "led": led_state})
+        return jsonify({"status": "success", "pump": pump_state})
     except requests.exceptions.RequestException as e:
-        return jsonify({"error": f"LED request failed: {str(e)}"}), 500
+        return jsonify({"error": f"pump request faipump: {str(e)}"}), 500
 
 # ----------------------------------------
 # BACKGROUND COLLECTOR: lấy dữ liệu mỗi 10 giây ghi CSV
@@ -254,11 +254,11 @@ def collector_loop():
                 hum_time = data["humidity"]["timestamp"]
                 save_to_csv(CSV_HUM, hum_time, hum_value)
 
-                gas_value = data["gas"]["value"]
-                gas_time = data["gas"]["timestamp"]
-                save_to_csv(CSV_GAS, gas_time, gas_value)
+                soil_value = data["soil"]["value"]
+                soil_time = data["soil"]["timestamp"]
+                save_to_csv(CSV_soil, soil_time, soil_value)
 
-                print(f"Saved: Temp={temp_value}, Hum={hum_value}, Gas={gas_value}")
+                print(f"Saved: Temp={temp_value}, Hum={hum_value}, soil={soil_value}")
         except Exception as e:
             print("Collector error:", e)
 
@@ -305,7 +305,7 @@ def delete_schedule(index):
     return jsonify({"error": "Invalid index"}), 404
 
 # Background thread to check schedules every minute
-def run_scheduled_tasks():
+def run_schedupump_tasks():
     last_executed = set()
     while True:
         now = datetime.now().strftime("%H:%M")
@@ -313,7 +313,7 @@ def run_scheduled_tasks():
             key = f"{now}-{entry['command']}"
             if entry["time"] == now and key not in last_executed:
                 url = f"{THINGSBOARD_URL}/api/plugins/telemetry/DEVICE/{DEVICE_ID}/attributes/SHARED_SCOPE"
-                body = {"led": entry["command"] == "on"}
+                body = {"pump": entry["command"] == "on"}
                 try:
                     requests.post(url, headers=HEADERS, json=body, timeout=5)
                     print(f"[Scheduler] Sent command: {entry['command']} at {now}")
@@ -328,137 +328,8 @@ def run_scheduled_tasks():
 # START SERVER
 if __name__ == "__main__":
     collector_thread = threading.Thread(target=collector_loop, daemon=True)
-    schedule_thread = threading.Thread(target=run_scheduled_tasks, daemon=True)
+    schedule_thread = threading.Thread(target=run_schedupump_tasks, daemon=True)
     collector_thread.start()
     schedule_thread.start()
     app.run(debug=True)
 
-
-
-# from flask import Flask, jsonify, render_template, request
-# import requests
-# import threading
-# import time
-# import csv
-# import os
-# from datetime import datetime
-
-# app = Flask(__name__, template_folder="templates")
-
-# THINGSBOARD_URL = "https://app.coreiot.io"
-# DEVICE_ID = "1f5f2270-f990-11ef-a887-6d1a184f2bb5"
-# JWT_TOKEN = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIcQ"
-# HEADERS = {"X-Authorization": f"Bearer {JWT_TOKEN}"}
-
-# CSV_TEMP = "temperature_data.csv"
-# CSV_HUM = "humidity_data.csv"
-# CSV_GAS = "gas_data.csv"
-# MAX_ROWS = 40
-
-# def save_to_csv(file_path, timestamp, value):
-#     rows = []
-#     if os.path.exists(file_path):
-#         with open(file_path, "r") as f:
-#             rows = list(csv.reader(f))
-
-#     rows.append([timestamp, value])
-
-#     if len(rows) > MAX_ROWS:
-#         rows = rows[-MAX_ROWS:]
-
-#     with open(file_path, "w", newline="") as f:
-#         writer = csv.writer(f)
-#         writer.writerows(rows)
-
-# @app.route("/dashboard")
-# def dashboard():
-#     return render_template("dashboard.html")
-
-# @app.route("/tempChart")
-# def temp_chart():
-#     return render_template("temp_chart.html")
-
-# @app.route("/humChart")
-# def hum_chart():
-#     return render_template("hum_chart.html")
-
-# @app.route("/gasChart")
-# def gas_chart():
-#     return render_template("gas_chart.html")
-
-# @app.route("/api/data")
-# def get_data():
-#     keys = "humidity,temperature,gas"
-#     url = f"{THINGSBOARD_URL}/api/plugins/telemetry/DEVICE/{DEVICE_ID}/values/timeseries?keys={keys}"
-
-#     response = requests.get(url, headers=HEADERS)
-#     if response.status_code != 200:
-#         return jsonify({"error": "ThingsBoard API error"}), 500
-
-#     data = response.json()
-#     result = {}
-#     for key in data:
-#         latest = data[key][-1]
-#         value = latest["value"]
-#         ts = int(latest["ts"]) / 1000
-#         time_str = datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-#         result[key] = {"value": value, "timestamp": time_str}
-
-#     return jsonify(result)
-
-# @app.route("/api/temp_history")
-# def get_temp_history():
-#     return load_csv_to_json(CSV_TEMP)
-
-# @app.route("/api/hum_history")
-# def get_hum_history():
-#     return load_csv_to_json(CSV_HUM)
-
-# @app.route("/api/gas_history")
-# def get_gas_history():
-#     return load_csv_to_json(CSV_GAS)
-
-# def load_csv_to_json(file_path):
-#     result = []
-#     try:
-#         with open(file_path, "r") as f:
-#             reader = csv.reader(f)
-#             for row in reader:
-#                 result.append({"timestamp": row[0], "value": float(row[1])})
-#     except FileNotFoundError:
-#         pass
-
-#     return jsonify(result)
-
-# # -------------- BACKGROUND COLLECTOR ----------------
-# def collector_loop():
-#     while True:
-#         try:
-#             res = requests.get("http://localhost:5000/api/data")
-#             if res.status_code == 200:
-#                 data = res.json()
-
-#                 temp_value = data["temperature"]["value"]
-#                 temp_time = data["temperature"]["timestamp"]
-#                 save_to_csv(CSV_TEMP, temp_time, temp_value)
-
-#                 hum_value = data["humidity"]["value"]
-#                 hum_time = data["humidity"]["timestamp"]
-#                 save_to_csv(CSV_HUM, hum_time, hum_value)
-
-#                 gas_value = data["gas"]["value"]
-#                 gas_time = data["gas"]["timestamp"]
-#                 save_to_csv(CSV_GAS, gas_time, gas_value)
-
-#                 print(f"Saved: Temp={temp_value}, Hum={hum_value}, Gas={gas_value}")
-#         except Exception as e:
-#             print("Collector error:", e)
-
-#         time.sleep(10)  # 10 seconds
-
-# # -------------- MAIN START ----------------
-# if __name__ == "__main__":
-#     collector_thread = threading.Thread(target=collector_loop, daemon=True)
-#     collector_thread.start()
-
-#     app.run(debug=True)

@@ -2,6 +2,6 @@
 #define SENSORS_MODULE_H
 
 void sendTelemetry(void *pvParameters);
-void sendMQ2Data(void *pvParameters);
+void sendSoilData(void *pvParameters);
 
 #endif // SENSORS_MODULE_H

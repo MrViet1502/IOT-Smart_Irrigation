@@ -29,7 +29,7 @@
     <a href="/dashboard" class="sBarBtn">Dashboard</a>
     <a href="/tempChart" class="sBarBtn">Temperature</a>
     <a href="/humChart" class="sBarBtn">Humidity</a>
-    <a href="/gasChart" class="sBarBtn">Gas</a>
+    <a href="/soilChart" class="sBarBtn">soil</a>
     <a href="/scheduler" class="sBarBtn">Automation</a>
     <a href="/logout" class="sBarBtn">Logout</a>
 </div>
@@ -77,16 +77,16 @@
             </div>
         </div>
 
-        <!-- Gas -->
+        <!-- soil -->
         <div class="col-md-4">
             <div class="card shadow">
                 <div class="card-body">
-                    <h5>🔥 Gas</h5>
-                    <h3 id="gas">--</h3>
-                    <p id="gas_time">--</p>
+                    <h5>🔥 Soil</h5>
+                    <h3 id="soil">--</h3>
+                    <p id="soil_time">--</p>
                     <div class="d-flex justify-content-center align-items-center flex-column">
-                        <button class="btn btn-outline-primary btn-sm mt-2" onclick="openThresholdModal('gas')">⚙️ Set Threshold</button>
-                        <span class="badge badge-info mt-2" id="threshold-gas-label">Ngưỡng: chưa đặt</span>
+                        <button class="btn btn-outline-primary btn-sm mt-2" onclick="openThresholdModal('soil')">⚙️ Set Threshold</button>
+                        <span class="badge badge-info mt-2" id="threshold-soil-label">Ngưỡng: chưa đặt</span>
                     </div>
                 </div>
             </div>
@@ -94,11 +94,11 @@
     </div>
 
 
-    <h2 class="my-4 text-center">🕹️ Control LED</h2>
-    <div class="text-center led-control">
-        <button class="btn btn-success" onclick="sendCommand('on')">Bật LED</button>
-        <button class="btn btn-danger" onclick="sendCommand('off')">Tắt LED</button>
-        <p id="led_status"></p>
+    <h2 class="my-4 text-center">🕹️ Control PUMP</h2>
+    <div class="text-center pump-control">
+        <button class="btn btn-success" onclick="sendCommand('on')">Bật PUMP</button>
+        <button class="btn btn-danger" onclick="sendCommand('off')">Tắt PUMP</button>
+        <p id="pump_status"></p>
     </div>
 </div>
 

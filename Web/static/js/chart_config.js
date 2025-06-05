@@ -14,10 +14,10 @@ const chartConfigs = {
         unit: "%",
         interval: 5000
     },
-    gas: {
-        canvasId: "gasChart",
-        apiUrl: "/api/gas_history",
-        label: "Gas (%)",
+    soil: {
+        canvasId: "soilChart",
+        apiUrl: "/api/soil_history",
+        label: "Soil (%)",
         unit: "%",
         interval: 10000
     }
