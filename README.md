@@ -58,3 +58,6 @@ Hệ thống tự động tưới cây thông minh sẽ sử dụng cảm biến
 ### **Tuần 7:**
 
 - Hoàn thiện hệ thống, viết báo cáo, chuẩn bị mô hình hệ thống.
+## Sinh viện thực hiện
+### Nguyễn Quốc Việt - 2115279  (100%)
+### Trần Viết Bình - 2112909    (100%)
