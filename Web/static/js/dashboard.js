@@ -165,7 +165,7 @@ function fetchThresholds() {
                 : "Ngưỡng: chưa đặt";
 
             document.getElementById("threshold-soil-label").innerText = thresholds.soil !== null
-                ? `Ngưỡng: ${thresholds.soil}`
+                ? `Ngưỡng: ${thresholds.soil} %`
                 : "Ngưỡng: chưa đặt";
         });
 }
@@ -187,7 +187,7 @@ function fetchData() {
         // Hiển thị giá trị
         document.getElementById("temp").innerText = `${temp} °C`;
         document.getElementById("humid").innerText = `${humid} %`;
-        document.getElementById("soil").innerText = soil;
+        document.getElementById("soil").innerText = `${soil} %`;;
 
         document.getElementById("temp_time").innerText = data.temperature.timestamp;
         document.getElementById("humid_time").innerText = data.humidity.timestamp;
@@ -199,7 +199,7 @@ function fetchData() {
         if (thresholds.humidity && humid < thresholds.humidity)
             toastr.warning(`💧 Độ ẩm thấp hơn ngưỡng: ${humid}%`);
         if (thresholds.soil && soil < thresholds.soil)
-            toastr.warning(`🔥 Chỉ số khí soil thấp hơn ngưỡng: ${soil}`);
+            toastr.warning(`💧Chỉ số độ ẩm đất thấp hơn ngưỡng: ${soil}%`);
     })
     .catch(err => {
         console.error("❌ Lỗi khi lấy dữ liệu:", err);
