@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Irrigation Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Toastr CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+    <!-- Toastr JS -->
+    
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/2913/2913465.png">
+    <link rel="stylesheet" href="/static/css/mystyle.css">
+    
+    <meta name="csrf-token" content="{{ csrf_token_value }}">
+
+</head>
+<body>
+
+<!-- Header -->
+<header class="bg-white p-3 shadow d-flex justify-content-between">
+    <h4><span class="text-success">IOT</span><span class="text-info">-</span>HCMUT</h4>
+</header>
+
+<!-- Sidebar -->
+<div class="sidebar">
+    <a href="/dashboard" class="sBarBtn">Dashboard</a>
+    <a href="/tempChart" class="sBarBtn">Temperature</a>
+    <a href="/humChart" class="sBarBtn">Humidity</a>
+    <a href="/soilChart" class="sBarBtn">Soil</a>
+    <a href="/scheduler" class="sBarBtn">Automation</a>
+    <a href="/logout" class="sBarBtn">Logout</a>
+</div>
+
+<!-- Content -->
+<div class="content">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item">Home</li>
+            <li class="breadcrumb-item active">Dashboard</li>
+        </ol>
+    </nav>
+
+    <h1 class="my-4 text-center">🌿 Smart Irrigation Dashboard</h1>
+
+    <div class="row text-center">
+    <!-- Temperature -->
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5>🌡️ Temperature</h5>
+                    <h3 id="temp">-- °C</h3>
+                    <p id="temp_time">--</p>
+                    <div class="d-flex justify-content-center align-items-center flex-column">
+                        <button class="btn btn-outline-primary btn-sm mt-2" onclick="openThresholdModal('temperature')">⚙️ Set Threshold</button>
+                        <span class="badge badge-info mt-2" id="threshold-temperature-label">Ngưỡng: chưa đặt</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Humidity -->
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5>💧 Humidity</h5>
+                    <h3 id="humid">-- %</h3>
+                    <p id="humid_time">--</p>
+                    <div class="d-flex justify-content-center align-items-center flex-column">
+                        <button class="btn btn-outline-primary btn-sm mt-2" onclick="openThresholdModal('humidity')">⚙️ Set Threshold</button>
+                        <span class="badge badge-info mt-2" id="threshold-humidity-label">Ngưỡng: chưa đặt</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- soil -->
+        <div class="col-md-4">
+            <div class="card shadow">
+                <div class="card-body">
+                    <h5>💧 Soil</h5>
+                    <h3 id="soil">-- %</h3>
+                    <p id="soil_time">--</p>
+                    <div class="d-flex justify-content-center align-items-center flex-column">
+                        <button class="btn btn-outline-primary btn-sm mt-2" onclick="openThresholdModal('soil')">⚙️ Set Threshold</button>
+                        <span class="badge badge-info mt-2" id="threshold-soil-label">Ngưỡng: chưa đặt</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <h2 class="my-4 text-center">🕹️ Control PUMP</h2>
+    <div class="text-center pump-control">
+        <button class="btn btn-success" onclick="sendCommand('on')">Bật PUMP</button>
+        <button class="btn btn-danger" onclick="sendCommand('off')">Tắt PUMP</button>
+        <p id="pump_status"></p>
+    </div>
+</div>
+
+<!-- Footer -->
+<footer class="text-center">
+    <p>All Rights Reserved &copy; Smart Irrigation System</p>
+</footer>
+
+<!-- JS + AJAX -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script src="/static/js/dashboard.js"></script>
+<!-- Bootstrap JS & Popper.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+<!-- Threshold Modal -->
+<div class="modal fade" id="thresholdModal" tabindex="-1" role="dialog" aria-labelledby="thresholdModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-sm" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+            <h5 class="modal-title" id="thresholdModalLabel">🔧 Set Threshold</h5>
+            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                <span>&times;</span>
+            </button>
+        </div>
+
+      <div class="modal-body">
+        <label for="thresholdInput">Minimum Value</label>
+        <input type="number" id="thresholdInput" class="form-control" placeholder="Enter minimum value...">
+        <input type="hidden" id="thresholdType">
+    </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-sm btn-secondary" data-dismiss="modal">Cancel</button>
+        <button class="btn btn-sm btn-primary" onclick="saveThreshold()">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+</body>
+</html>

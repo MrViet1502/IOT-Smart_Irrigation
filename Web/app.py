@@ -1,183 +1,355 @@
-
-from flask import Flask, jsonify, render_template, request
+from flask import Flask, jsonify, render_template, request, session, redirect, url_for
+from flask_wtf.csrf import CSRFProtect, generate_csrf
+from datetime import datetime, timedelta
 import requests
-from datetime import datetime
+import threading
+import time
+import csv
 import os
+import json
+from apscheduler.schedulers.background import BackgroundScheduler
 
+from threading import Thread
+from datetime import datetime
+
+
+SCHEDULE_FILE = "schedules.json"
+schedules = []  # Each item: {"time": "HH:MM", "command": "on" or "off"}
 app = Flask(__name__, template_folder="templates")
+app.secret_key = "qwertyuiop"  # Đặt key bảo mật riêng
+csrf = CSRFProtect(app)
 
-
+# ----------- Cấu hình IoT ThingsBoard -------------
 THINGSBOARD_URL = "https://app.coreiot.io"
-DEVICE_ID = "1f5f==" # key id device
-JWT_TOKEN = "eyJhbGciOiJIUzUxMiJ9.===="  #key token
+DEVICE_ID = "1f5f2270-f990-11ef-a887-6d1a184f2bb5"
+JWT_TOKEN = "eyJhbGciOiJIUQ"
 HEADERS = {"X-Authorization": f"Bearer {JWT_TOKEN}"}
 
-@app.route("/api/data")
-def get_latest_data():
-    keys = "humidity,temperature,mq2_analog"
-    url = f"{THINGSBOARD_URL}/api/plugins/telemetry/DEVICE/{DEVICE_ID}/values/timeseries?keys={keys}"
+# ----------- Cấu hình lưu dữ liệu -------------
+CSV_TEMP = "temperature_data.csv"
+CSV_HUM = "humidity_data.csv"
+CSV_soil = "soil_data.csv"
+MAX_ROWS = 40
 
-    response = requests.get(url, headers=HEADERS)
-    if response.status_code != 200:
-        return jsonify({"error": "ThingsBoard API error"}), 500
+# Inject CSRF token cho form
+@app.context_processor
+def inject_csrf_token():
+    return {"csrf_token_value": generate_csrf()}
 
-    data = response.json()
-    result = {}
-    for key in data:
-        latest = data[key][-1]
-        value = latest["value"]
-        ts = int(latest["ts"]) / 1000
-        time_str = datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
-        result[key] = {"value": value, "timestamp": time_str}
-    return jsonify(result)
+if os.path.exists(SCHEDULE_FILE):
+    with open(SCHEDULE_FILE, "r") as f:
+        schedules = json.load(f)
+# ----------------------------------------
+# Helper: Lưu dữ liệu vào CSV
+def save_to_csv(file_path, timestamp, value):
+    rows = []
+    if os.path.exists(file_path):
+        with open(file_path, "r") as f:
+            rows = list(csv.reader(f))
 
+    rows.append([timestamp, value])
 
-@app.route("/api/control", methods=["POST"])
-def control_device():
-    payload = request.get_json()
-    command = payload.get("command")  # "on" hoặc "off"
+    if len(rows) > MAX_ROWS:
+        rows = rows[-MAX_ROWS:]
 
-    if command not in ["on", "off"]:
-        return jsonify({"error": "Invalid command"}), 400
+    with open(file_path, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerows(rows)
 
-    led_state = True if command == "on" else False
+# ----------------------------------------
+# LOGIN / SESSION
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if request.method == "POST":
+        username = request.form.get("username")
+        password = request.form.get("password")
 
-    url = f"{THINGSBOARD_URL}/api/plugins/telemetry/DEVICE/{DEVICE_ID}/attributes/SHARED_SCOPE"
-    body = {
-        "led": led_state
-    }
-
-    try:
-        response = requests.post(url, headers=HEADERS, json=body, timeout=5)
-        if response.status_code == 200:
-            return jsonify({"status": "success", "led": led_state})
+        if username == "admin" and password == "12345":
+            session['user_id'] = username
+            session.permanent = True
+            app.permanent_session_lifetime = timedelta(minutes=30)
+            return redirect(url_for("dashboard"))
         else:
-            return jsonify({"error": "Failed to send shared attribute", "code": response.status_code}), 500
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": f"Request exception: {str(e)}"}), 500
+            return render_template("login.html", error="Invalid username or password")
+
+    return render_template("login.html")
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect(url_for("login"))
+
+@app.route("/api/check_session")
+def check_session():
+    return {"logged_in": 'user_id' in session}
+
+# ----------------------------------------
+# DASHBOARD + GIAO DIỆN
+THRESHOLD_FILE = "thresholds.json"
+
+@app.route("/api/thresholds", methods=["GET"])
+def get_thresholds():
+    try:
+        if os.path.exists(THRESHOLD_FILE):
+            with open(THRESHOLD_FILE, "r") as f:
+                return jsonify(json.load(f))
+    except:
+        pass
+    return jsonify({"temperature": None, "humidity": None, "soil": None})
+
+@app.route("/api/thresholds", methods=["POST"])
+@csrf.exempt
+def save_thresholds():
+    data = request.get_json()
+    type_ = data.get("type")
+    value = data.get("value")
+
+    if not type_ or not isinstance(value, (float, int)):
+        return jsonify({"error": "Invalid threshold"}), 400
+
+    thresholds = {}
+    if os.path.exists(THRESHOLD_FILE):
+        with open(THRESHOLD_FILE, "r") as f:
+            thresholds = json.load(f)
+
+    thresholds[type_] = value
+
+    with open(THRESHOLD_FILE, "w") as f:
+        json.dump(thresholds, f)
+
+    return jsonify({"status": "saved"})
+
+
+
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    if 'user_id' in session:
+        return redirect(url_for("dashboard"))
+    return redirect(url_for("login"))
 
+@app.route("/dashboard")
+def dashboard():
+    if 'user_id' in session:
+        return render_template("dashboard.html")
+    return redirect(url_for("login"))
+
+@app.route("/tempChart")
+def temp_chart():
+    if 'user_id' in session:
+        return render_template("temp_chart.html")
+    return redirect(url_for("login"))
+
+@app.route("/humChart")
+def hum_chart():
+    if 'user_id' in session:
+        return render_template("hum_chart.html")
+    return redirect(url_for("login"))
+
+@app.route("/soilChart")
+def soil_chart():
+    if 'user_id' in session:
+        return render_template("soil_chart.html")
+    return redirect(url_for("login"))
+
+# ----------------------------------------
+# API realtime đọc data từ ThingsBoard
+@app.route("/api/data")
+def get_data():
+    keys = "humidity,temperature,soil"
+    url = f"{THINGSBOARD_URL}/api/plugins/telemetry/DEVICE/{DEVICE_ID}/values/timeseries?keys={keys}"
+
+    try:
+        response = requests.get(url, headers=HEADERS)
+        response.raise_for_status()
+        data = response.json()
+        result = {}
+        for key in data:
+            if data[key]:
+                latest = data[key][-1]
+                value = latest["value"]
+                ts = int(latest["ts"]) / 1000
+                time_str = datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
+                result[key] = {"value": value, "timestamp": time_str}
+        return jsonify(result)
+
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": f"ThingsBoard API error: {str(e)}"}), 500
+
+# ----------------------------------------
+# API lấy dữ liệu lịch sử từ CSV (Chart)
+@app.route("/api/temp_history")
+def get_temp_history():
+    return load_csv_to_json(CSV_TEMP)
+
+@app.route("/api/hum_history")
+def get_hum_history():
+    return load_csv_to_json(CSV_HUM)
+
+@app.route("/api/soil_history")
+def get_soil_history():
+    return load_csv_to_json(CSV_soil)
+
+def load_csv_to_json(file_path):
+    result = []
+    try:
+        with open(file_path, "r") as f:
+            reader = csv.reader(f)
+            for row in reader:
+                result.append({"timestamp": row[0], "value": float(row[1])})
+    except FileNotFoundError:
+        pass
+
+    return jsonify(result)
+
+# ----------------------------------------
+# API điều khiển thiết bị
+@app.route("/api/control", methods=["POST"])
+@csrf.exempt
+def control_device():
+    payload = request.get_json()
+
+    # Trường hợp gửi lệnh OTA update
+    if "ota_url" in payload:
+        ota_url = payload["ota_url"]
+        url = f"{THINGSBOARD_URL}/api/plugins/telemetry/DEVICE/{DEVICE_ID}/attributes/SHARED_SCOPE"
+        body = {"fw_url": ota_url}
+        try:
+            response = requests.post(url, headers=HEADERS, json=body, timeout=5)
+            response.raise_for_status()
+            return jsonify({"status": "success", "type": "ota"})
+        except requests.exceptions.RequestException as e:
+            return jsonify({"error": f"OTA request failed: {str(e)}"}), 500
+
+    # Trường hợp gửi RFID key
+    elif "rfid_key" in payload:
+        rfid_key = payload["rfid_key"]
+        url = f"{THINGSBOARD_URL}/api/plugins/telemetry/DEVICE/{DEVICE_ID}/attributes/SHARED_SCOPE"
+        body = {"rfid_key": rfid_key}
+        try:
+            response = requests.post(url, headers=HEADERS, json=body, timeout=5)
+            response.raise_for_status()
+            return jsonify({"status": "success", "type": "rfid", "rfid_key": rfid_key})
+        except requests.exceptions.RequestException as e:
+            return jsonify({"error": f"RFID request failed: {str(e)}"}), 500
+
+    # Trường hợp gửi lệnh bật/tắt pump
+    elif "command" in payload:
+        command = payload["command"]
+        if command not in ["on", "off"]:
+            return jsonify({"error": "Invalid command"}), 400
+
+        pump_state = command == "on"
+        url = f"{THINGSBOARD_URL}/api/plugins/telemetry/DEVICE/{DEVICE_ID}/attributes/SHARED_SCOPE"
+        body = {"pump": pump_state}
+        try:
+            response = requests.post(url, headers=HEADERS, json=body, timeout=5)
+            response.raise_for_status()
+            return jsonify({"status": "success", "pump": pump_state})
+        except requests.exceptions.RequestException as e:
+            return jsonify({"error": f"Pump request failed: {str(e)}"}), 500
+
+    # Nếu không khớp với bất kỳ key nào
+    else:
+        return jsonify({"error": "Invalid payload structure"}), 400
+
+   
+
+# ----------------------------------------
+# BACKGROUND COLLECTOR: lấy dữ liệu mỗi 10 giây ghi CSV
+def collector_loop():
+    while True:
+        try:
+            res = requests.get("http://localhost:5000/api/data", timeout=5)
+            res.raise_for_status()
+            if res.status_code == 200:
+                data = res.json()
+
+                temp_value = data["temperature"]["value"]
+                temp_time = data["temperature"]["timestamp"]
+                save_to_csv(CSV_TEMP, temp_time, temp_value)
+
+                hum_value = data["humidity"]["value"]
+                hum_time = data["humidity"]["timestamp"]
+                save_to_csv(CSV_HUM, hum_time, hum_value)
+
+                soil_value = data["soil"]["value"]
+                soil_time = data["soil"]["timestamp"]
+                save_to_csv(CSV_soil, soil_time, soil_value)
+
+                print(f"Saved: Temp={temp_value}, Hum={hum_value}, soil={soil_value}")
+        except Exception as e:
+            print("Collector error:", e)
+
+        time.sleep(50)
+
+
+
+# Add this route
+@app.route("/scheduler")
+def scheduler_page():
+    if 'user_id' in session:
+        return render_template("scheduler.html")
+    return redirect(url_for("login"))
+
+# Add these API endpoints
+@app.route("/api/schedule", methods=["GET", "POST"])
+@csrf.exempt
+def manage_schedule():
+    global schedules
+    if request.method == "GET":
+        return jsonify(schedules)
+
+    data = request.get_json()
+    time_str = data.get("time")
+    command = data.get("command")
+
+    if not time_str or command not in ["on", "off"]:
+        return jsonify({"error": "Invalid input"}), 400
+
+    schedules.append({"time": time_str, "command": command})
+    with open(SCHEDULE_FILE, "w") as f:
+        json.dump(schedules, f)
+    return jsonify({"status": "added"})
+
+@app.route("/api/schedule/<int:index>", methods=["DELETE"])
+@csrf.exempt
+def delete_schedule(index):
+    global schedules
+    if 0 <= index < len(schedules):
+        schedules.pop(index)
+        with open(SCHEDULE_FILE, "w") as f:
+            json.dump(schedules, f)
+        return jsonify({"status": "deleted"})
+    return jsonify({"error": "Invalid index"}), 404
+
+# Background thread to check schedules every minute
+def run_schedupump_tasks():
+    last_executed = set()
+    while True:
+        now = datetime.now().strftime("%H:%M")
+        for entry in schedules:
+            key = f"{now}-{entry['command']}"
+            if entry["time"] == now and key not in last_executed:
+                url = f"{THINGSBOARD_URL}/api/plugins/telemetry/DEVICE/{DEVICE_ID}/attributes/SHARED_SCOPE"
+                body = {"pump": entry["command"] == "on"}
+                try:
+                    requests.post(url, headers=HEADERS, json=body, timeout=5)
+                    print(f"[Scheduler] Sent command: {entry['command']} at {now}")
+                    last_executed.add(key)
+                except Exception as e:
+                    print("Scheduler send error:", e)
+        time.sleep(60)
+
+
+
+# ----------------------------------------
+# START SERVER
 if __name__ == "__main__":
-    app.run(debug=True)
+    collector_thread = threading.Thread(target=collector_loop, daemon=True)
+    schedule_thread = threading.Thread(target=run_schedupump_tasks, daemon=True)
+    collector_thread.start()
+    schedule_thread.start()
+    app.run(debug=False, host="0.0.0.0", port=5000)
 
-
-
-# from flask import Flask, render_template, jsonify, request
-# import threading
-# import json
-# import paho.mqtt.client as mqtt
-# import logging
-
-# # Cấu hình logging (giúp bạn debug)
-# logging.basicConfig(level=logging.INFO)
-
-# app = Flask(__name__)
-# sensor_data = {"soil_moisture": 0, "temperature": 0, "humidity": 0}
-
-# # MQTT cấu hình
-# MQTT_BROKER = "localhost"
-# MQTT_PORT = 1883
-# MQTT_TOPIC_SUB = "sensor/data"
-# MQTT_TOPIC_PUB = "led/control"
-
-# # Khởi tạo client dùng cho lắng nghe dữ liệu
-# mqtt_client = mqtt.Client(protocol=mqtt.MQTTv311)
-
-
-# # Callback khi nhận dữ liệu từ MQTT
-# def on_message(client, userdata, msg):
-#     global sensor_data
-#     try:
-#         payload = json.loads(msg.payload.decode())
-#         sensor_data.update(payload)
-#         logging.info(f"Received: {sensor_data}")
-#     except Exception as e:
-#         logging.warning(f"Failed to parse MQTT message: {e}")
-
-
-# # Luồng riêng để lắng nghe MQTT
-# def mqtt_listen():
-#     mqtt_client.on_message = on_message
-#     try:
-#         mqtt_client.connect(MQTT_BROKER, MQTT_PORT)
-#         mqtt_client.subscribe(MQTT_TOPIC_SUB)
-#         mqtt_client.loop_forever()
-#     except Exception as e:
-#         logging.error(f"MQTT connect/listen failed: {e}")
-
-
-# # Giao diện hiển thị chính
-# @app.route('/')
-# def index():
-#     return render_template('index.html', data=sensor_data)
-
-
-# # API lấy dữ liệu JSON (gọi từ frontend)
-# @app.route('/data')
-# def data():
-#     return jsonify(sensor_data)
-
-
-# # API gửi lệnh điều khiển từ web đến ESP32 qua MQTT
-# @app.route('/control', methods=['GET'])
-# def control():
-#     action = request.args.get('action')
-#     if action not in ["on", "off"]:
-#         return jsonify({"status": "error", "message": "Invalid action"}), 400
-
-#     try:
-#         mqtt_client.publish(MQTT_TOPIC_PUB, action)
-#         logging.info(f"Published control: {action}")
-#         return jsonify({"status": "ok", "action": action})
-#     except Exception as e:
-#         logging.error(f"Failed to publish control command: {e}")
-#         return jsonify({"status": "error", "message": str(e)}), 500
-
-
-# if __name__ == '__main__':
-#     mqtt_thread = threading.Thread(target=mqtt_listen, daemon=True)
-#     mqtt_thread.start()
-#     app.run(debug=True, port=5000)
-
-
-# from flask import Flask, render_template, request, jsonify
-# import threading
-# from mqtt_handler import mqtt_listen, publish_control
-# from firebase_handler import log_sensor_data
-
-# app = Flask(__name__)
-# sensor_data = {"soil_moisture": 0}
-
-# def update_data(data):
-#     sensor_data.update(data)
-#     log_sensor_data(data)
-
-# mqtt_thread = threading.Thread(target=mqtt_listen, args=(update_data,), daemon=True)
-# mqtt_thread.start()
-
-# @app.route('/')
-# def index():
-#     return render_template('index.html', data=sensor_data)
-
-# @app.route('/data')
-# def data():
-#     return jsonify(sensor_data)
-
-# @app.route('/control')
-# def control():
-#     action = request.args.get('action')
-#     if action in ['on', 'off']:
-#         publish_control(action)
-#         return jsonify({"status": "ok", "action": action})
-#     return jsonify({"status": "error"}), 400
-
-# if __name__ == '__main__':
-#     app.run(debug=True, use_reloader=False)
-
-# Using firebase
-
-# ================================
 
